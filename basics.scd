@@ -69,17 +69,22 @@ s.boot;
 ~butt.value(["LOUD", "MUTE"], [ Color.green, Color.red ]);
 
 ~bpmSpec = ControlSpec(20, 220, \lin, 1, 120);
-~volSpec = ControlSpec(0, 10, \db, 0, 0.3);
+~jigSpec = ControlSpec(0, 100, \lin, 0, 0);
+
+~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
+~ringSpec = ControlSpec(0, 100, \lin, 0, 0);
+
 ~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
+~buzzSpec = ControlSpec(0, 100, \lin, 0, 0);
 
 ~knob.value("Tempo", Color.yellow, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/60);
-~knob.value("Jiggle", Color.yellow, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/60);
+~knob.value("Jiggle", Color.yellow, { |val| ~vol = val; }, ~jigSpec);
 
-~knob.value("Volume", Color.yellow, { |val| ~vol = val; }, ~volSpec, 1/10);
-~knob.value("Ring", Color.yellow, { |val| ~vol = val; }, ~volSpec, 1/10);
+~knob.value("Volume", Color.yellow, { |val| ~vol = val; }, ~volSpec, 1/100);
+~knob.value("Ring", Color.yellow, { |val| ~vol = val; }, ~ringSpec, 1/100);
 
 ~knob.value("Tune", Color.yellow, { |val| ~vol = val; }, ~freqSpec);
-~knob.value("Buzz", Color.yellow, { |val| ~vol = val; }, ~volSpec);
+~knob.value("Buzz", Color.yellow, { |val| ~vol = val; }, ~buzzSpec, 1/100);
 
 );
 
