@@ -63,18 +63,26 @@ s.boot;
 // CONSTRUCT GLOBAL GUI
 //======================
 (
-~tick = {arg beats, time, clock; [beats, time, clock].postln; 1;};
 ~jig = 0.0;
+~out = Bus.audio(s);//the output (pre volume)
+~tick = {arg beats, time, clock;
+	[beats, time, clock].postln;
+	Synth(\vartest, [\vol, ~vol, ]);
+	1 + ((In.kr(~out) * ~jig / 8).max(-1 / 8));//with retrig limiter
+};
 
 ~vol = 1.0;
 ~ring = 0.0;
-~mute = false;
+~mute = 1.0;
 
 ~hz = 440;
 ~buzz = 0.0;
 
-~butt.value(["STOP", "RUN"], [ Color.red, Color.green ], [{ ~sync.clear; }, { ~sync.playNextBar(~tick); }]);
-~butt.value(["LOUD", "MUTE"], [ Color.green, Color.red ], [{ ~mute = false; }, { ~mute = true; }]);
+~butt.value(["STOP", "RUN"], [ Color.red, Color.green ], [
+	{ ~sync.clear; },
+	{ ~sync.playNextBar(~tick, 1/256); }
+]);
+~butt.value(["LOUD", "MUTE"], [ Color.green, Color.red ], [{ ~mute = 1.0; }, { ~mute = 0.0; }]);
 
 ~bpmSpec = ControlSpec(20, 220, \lin, 1, 120);
 ~jigSpec = ControlSpec(0, 100, \lin, 0, 0);
@@ -103,10 +111,17 @@ s.boot;
 ~cont.value("HiHo");
 
 ~butt.value(["ON\nJZ", "OFF"], [ Color.green, Color.red ]);
+
+SynthDef(\vartest, {|a = 0.01, r = 1|
+    // the EnvGen with doneAction: 2 frees the synth automatically when done
+	    Out.ar(~out, SinOsc.ar(~hz, ~buzz * In.kr(~out),
+		(1.0 + (~ring * In.kr(~out))) * EnvGen.kr(Env.perc(a, r, ~vol * ~mute), doneAction: 2)));
+	Out.ar(0, In.kr(~out)!2);//output audio
+}, variants: (alpha: [a: 0.5, r: 0.5], beta: [a: 3, r: 0.01], gamma: [a: 0.01, r: 4])
+).add;
+
 );
 
 //======
 // EXIT
 //======
-
-
