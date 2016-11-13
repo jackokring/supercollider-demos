@@ -133,6 +133,10 @@ s.doWhenBooted({
 ~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
 ~buzzSpec = ControlSpec(0, 100, \lin, 0, 0);
 
+~resSpec = ControlSpec(0, 100, \lin, 0, 0);
+~modSpec = ControlSpec(-100, 100, \lin, 0, 0);
+~regSpec = ControlSpec(0, 100, \lin, 0, 0);
+
 ~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/15);
 ~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~jigSpec, 1/5000);
 
@@ -145,6 +149,10 @@ s.doWhenBooted({
 
 ~noteArr.value;
 
+~knob.value("Center", Color.yellow, {}, ~freqSpec);
+~knob.value("ResQ", Color.yellow, {}, ~resSpec);
+~knob.value("EnvMod", Color.yellow, {}, ~modSpec);
+~knob.value("Regen", Color.yellow, {}, ~regSpec);
 );
 
 //================
