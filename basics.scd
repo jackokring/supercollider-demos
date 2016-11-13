@@ -76,6 +76,14 @@ s.boot;
 		~noteButt.value(i, muller);//make 8 note keys
 	};
 };
+
+~noteSpec = ControlSpec(-24, 24, \lin, 1, 0);
+
+~noteKnobs = {
+	8.do { arg i;
+		~knob.value("@" ++ i.asDigit, Color.blue, {}, ~noteSpec);
+	};
+};
 );
 
 //======================
@@ -149,16 +157,7 @@ s.doWhenBooted({
 		~knob.value("SH13", Color.green, {}, ~modSpec);
 		~knob.value("SH17", Color.green, {}, ~modSpec);
 
-		~noteSpec = ControlSpec(-24, 24, \lin, 1, 0);
-
-		~knob.value("@0", Color.blue, {}, ~noteSpec);
-		~knob.value("@1", Color.blue, {}, ~noteSpec);
-		~knob.value("@2", Color.blue, {}, ~noteSpec);
-		~knob.value("@3", Color.blue, {}, ~noteSpec);
-		~knob.value("@4", Color.blue, {}, ~noteSpec);
-		~knob.value("@5", Color.blue, {}, ~noteSpec);
-		~knob.value("@6", Color.blue, {}, ~noteSpec);
-		~knob.value("@7", Color.blue, {}, ~noteSpec);
+		~noteKnobs.value;
 
 		~noteArr.value;
 
