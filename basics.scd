@@ -182,9 +182,9 @@ s.doWhenBooted({
 		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/50);
 		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/50);
 
-		~knob.value("FB3", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/10);
-		~knob.value("FB5", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/10);
-		~knob.value("FB17", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/10);
+		~knob.value("FB3", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
+		~knob.value("FB5", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/20);
+		~knob.value("FB17", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/20);
 
 		//row 3 and 4
 		~noteKnobs.value;
