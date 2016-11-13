@@ -173,7 +173,8 @@ s.doWhenBooted({
 		~sub = Bus.control(s, 7);
 		~ratioSpec = ControlSpec(-24, 24, \lin, 0, 0);
 
-		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~ratioSpec);
+		//one octave up filter
+		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** ((val / 12)) + 1); }, ~ratioSpec);
 
 		~knob.value("SH2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/50);
 		~knob.value("SH3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
@@ -216,7 +217,7 @@ s.doWhenBooted({
 			var lpf = LPF.ar(osc, filt);
 
 			Out.ar(out, lpf);
-			Out.ar(0, lpf * ~vol.kr);//output audio
+			Out.ar(0, (lpf * ~vol.kr)!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
