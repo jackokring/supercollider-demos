@@ -142,6 +142,7 @@ s.doWhenBooted({
 
 		~hz = Bus.control(s);
 		~buzz = Bus.control(s);
+		~tmpo = Bus.control(s);
 
 		~butt.value(["RUN", "RUN"], [ Color.red, Color.green ], [
 			{ ~sync.clear; },
@@ -158,12 +159,12 @@ s.doWhenBooted({
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 		~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
 
-		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/30);
+		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/30);
 		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);
 			~vol.set(val); }, ~volSpec);
-		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/10);
+		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/30);
 
 		~knob.value("Tune", Color.red, { |val| ~hz.set(val); }, ~freqSpec);
 		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/3);
@@ -176,13 +177,14 @@ s.doWhenBooted({
 		//one octave up filter
 		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** ((val / 12)) + 1); }, ~ratioSpec);
 
-		~knob.value("SH2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/50);
-		~knob.value("SH3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
-		~knob.value("SH5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/100);
-		~knob.value("SH7", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/100);
-		~knob.value("SH11", Color.green, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/150);
-		~knob.value("SH13", Color.green, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/150);
-		~knob.value("SH17", Color.green, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/150);
+		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/50);
+		~knob.value("SB3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
+		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/50);
+		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/50);
+
+		~knob.value("FB3", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/10);
+		~knob.value("FB5", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/10);
+		~knob.value("FB17", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/10);
 
 		//row 3 and 4
 		~noteKnobs.value;
@@ -199,21 +201,19 @@ s.doWhenBooted({
 		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1|
 			var out = Bus.audio(s);//the output (pre volume)
 			var hz = ~hz.kr * mul;
+			var rl = ~tmpo.kr / 20;
 			var filt = hz * ~lpf.kr;
 			var pm = ~buzz.kr * out.ar;
 			var am = 1 + (~ring.kr * out.ar);
 
-			var env = EnvGen.kr(Env.perc(0.01, r, l), doneAction: 2);
+			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
 
 			var subz = SinOsc.ar( hz / 2, 0, ~sub.kr(1, 0)) +
-			SinOsc.ar( hz / 3, 0, ~sub.kr(1, 1)) +
-			SinOsc.ar( hz / 5, 0, ~sub.kr(1, 2)) +
-			SinOsc.ar( hz / 7, 0, ~sub.kr(1, 3)) +
-			SinOsc.ar( hz / 11, 0, ~sub.kr(1, 4)) +
-			SinOsc.ar( hz / 13, 0, ~sub.kr(1, 5)) +
-			SinOsc.ar( hz / 17, 0, ~sub.kr(1, 6));
+			SinOsc.ar( hz / 3, out.ar * ~sub.kr(1, 4), ~sub.kr(1, 1)) +
+			SinOsc.ar( hz / 5, out.ar * ~sub.kr(1, 5), ~sub.kr(1, 2)) +
+			SinOsc.ar( hz / 17, out.ar * ~sub.kr(1, 6), ~sub.kr(1, 3));
 
-			var osc = SinOsc.ar(hz, pm + subz, am * env);
+			var osc = SinOsc.ar(hz, pm + subz, (am * env) / 2);
 			var lpf = LPF.ar(osc, filt);
 
 			Out.ar(out, lpf);
@@ -221,10 +221,10 @@ s.doWhenBooted({
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
-			note: [r: 1],
-			accent: [r: 1, l: 1.5],
-			long: [r: 2],
-			blip: [r: 0.1])
+			note: [r: 10],
+			accent: [r: 10, l: 2],
+			long: [r: 20],
+			blip: [r: 1])
 		).add;
 	);
 
