@@ -76,14 +76,6 @@ s.boot;
 		~noteButt.value(i, muller);//make 8 note keys
 	};
 };
-
-// Make default window
-~cont.value("Global Controls",  {
-	~sync.clear;
-	s.quit;
-	Window.closeAll;
-});
-~win.alwaysOnTop = true;
 );
 
 //======================
@@ -93,6 +85,13 @@ s.boot;
 s.doWhenBooted({
 	"BOOT COMPLETE!".postln;
 	(
+		// Make default window
+		~cont.value("Global Hi",  {
+			~sync.clear;
+			s.quit;
+			Window.closeAll;
+		});
+		~win.alwaysOnTop = true;
 		~jig = 0.0;
 		~out = Bus.audio(s);//the output (pre volume)
 		~resid = 0.0;
@@ -115,11 +114,11 @@ s.doWhenBooted({
 		~hz = Bus.control(s);
 		~buzz = Bus.control(s);
 
-		~butt.value(["STOP", "RUN"], [ Color.red, Color.green ], [
+		~butt.value(["RUN", "RUN"], [ Color.red, Color.green ], [
 			{ ~sync.clear; },
 			{ ~fonty.at(~noteIdx).font = ~fontTmp; ~noteIdx = 7; ~sync.play(~tick, 0); }
 		]);
-		~butt.value(["LOUD", "MUTE"], [ Color.green, Color.red ], [
+		~butt.value(["MUTE", "MUTE"], [ Color.green, Color.red ], [
 			{ s.unmute; },
 			{ s.mute; }
 		]);
@@ -150,15 +149,16 @@ s.doWhenBooted({
 		~knob.value("SH13", Color.green, {}, ~modSpec);
 		~knob.value("SH17", Color.green, {}, ~modSpec);
 
-		~knob.value("Filter", Color.yellow, {}, ~freqSpec);
+		~noteSpec = ControlSpec(-24, 24, \lin, 1, 0);
 
-		~knob.value("SH2", Color.green, {}, ~modSpec);
-		~knob.value("SH3", Color.green, {}, ~modSpec);
-		~knob.value("SH5", Color.green, {}, ~modSpec);
-		~knob.value("SH7", Color.green, {}, ~modSpec);
-		~knob.value("SH11", Color.green, {}, ~modSpec);
-		~knob.value("SH13", Color.green, {}, ~modSpec);
-		~knob.value("SH17", Color.green, {}, ~modSpec);
+		~knob.value("@0", Color.blue, {}, ~noteSpec);
+		~knob.value("@1", Color.blue, {}, ~noteSpec);
+		~knob.value("@2", Color.blue, {}, ~noteSpec);
+		~knob.value("@3", Color.blue, {}, ~noteSpec);
+		~knob.value("@4", Color.blue, {}, ~noteSpec);
+		~knob.value("@5", Color.blue, {}, ~noteSpec);
+		~knob.value("@6", Color.blue, {}, ~noteSpec);
+		~knob.value("@7", Color.blue, {}, ~noteSpec);
 
 		~noteArr.value;
 
