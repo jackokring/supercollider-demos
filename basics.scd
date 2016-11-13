@@ -163,10 +163,10 @@ s.doWhenBooted({
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);
 			~vol.set(val); }, ~volSpec);
-		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/5);
+		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/10);
 
 		~knob.value("Tune", Color.red, { |val| ~hz.set(val); }, ~freqSpec);
-		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/5);
+		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/3);
 
 		//Row 2
 		~lpf = Bus.control(s);
