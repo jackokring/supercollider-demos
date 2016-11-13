@@ -100,7 +100,7 @@ s.doWhenBooted({
 			AppClock.play({
 				~fonty.at(~noteIdx).font = ~fontDef;// big
 			});
-			Synth(\hiho, [ \mul, ~noteMul.at(~noteIdx) ]);
+			Synth(\hi, [ \mul, ~noteMul.at(~noteIdx) ]);
 			AppClock.play({
 				~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp;
 			});
@@ -150,20 +150,31 @@ s.doWhenBooted({
 		~knob.value("SH13", Color.green, {}, ~modSpec);
 		~knob.value("SH17", Color.green, {}, ~modSpec);
 
-		~noteArr.value;
-	);
+		~knob.value("Filter", Color.yellow, {}, ~freqSpec);
 
-	//================
-	// SYNTH GUI HiHo
-	//================
-	(
-		SynthDef(\hiho, {|mul = 1.0, a = 0.01, r = 1|
+		~knob.value("SH2", Color.green, {}, ~modSpec);
+		~knob.value("SH3", Color.green, {}, ~modSpec);
+		~knob.value("SH5", Color.green, {}, ~modSpec);
+		~knob.value("SH7", Color.green, {}, ~modSpec);
+		~knob.value("SH11", Color.green, {}, ~modSpec);
+		~knob.value("SH13", Color.green, {}, ~modSpec);
+		~knob.value("SH17", Color.green, {}, ~modSpec);
+
+		~noteArr.value;
+
+		SynthDef(\hi, {|mul = 1.0, a = 0.01, r = 1|
 			var temp = SinOsc.ar(~hz.kr * mul, ~buzz.kr * ~out.kr,
 				(1 + (~ring.kr * ~out.kr)) * EnvGen.kr(Env.perc(a, r, 1.0), doneAction: 2));
 			Out.ar(~out, temp);
 			Out.ar(0, temp * ~vol.kr);//output audio
 		}, variants: (alpha: [a: 0.5, r: 0.5], beta: [a: 3, r: 0.01], gamma: [a: 0.01, r: 4])
 		).add;
+	);
+
+	//================
+	// SYNTH GUI HiHo
+	//================
+	(
 
 		~cont.value("HiHo");
 
