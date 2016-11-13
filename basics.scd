@@ -175,13 +175,13 @@ s.doWhenBooted({
 
 		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~ratioSpec);
 
-		~knob.value("SH2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
-		~knob.value("SH3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
-		~knob.value("SH5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/20);
-		~knob.value("SH7", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/20);
-		~knob.value("SH11", Color.green, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
-		~knob.value("SH13", Color.green, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/20);
-		~knob.value("SH17", Color.green, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/20);
+		~knob.value("SH2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/50);
+		~knob.value("SH3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
+		~knob.value("SH5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/50);
+		~knob.value("SH7", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/50);
+		~knob.value("SH11", Color.green, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/50);
+		~knob.value("SH13", Color.green, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/50);
+		~knob.value("SH17", Color.green, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/50);
 
 		//row 3 and 4
 		~noteKnobs.value;
