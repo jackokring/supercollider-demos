@@ -1,6 +1,12 @@
 //generic synth template
 //(C)2016 K Ring Technologies Ltd, Simon Jackson
 
+//Notes for the brave.
+//--------------------
+//I have not created any classes, as this requires Quarks and installing into the compiled class base.
+//I have used functions as classes, and provided some common control constructors. Some are NOT reentrant.
+//Happy coding!
+
 //=========================
 // START AND TEMPLATE CTRL
 //=========================
@@ -12,11 +18,15 @@ s.boot;
 ~winCnt = 0;
 ~noteIdx = 0;
 ~fonty = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ];
-~noteMul = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ];
-~notes = [ 0.0 ] ++ (([ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 ] + 69).midicps) / 440;
 
-~fontDef = Font(Font.default.name, 30);
-~fontTmp = Font(Font.default.name, 15);
+~noteMul = [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ];
+~envSel = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+
+~notes = (([ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] + 69).midicps) / 440;//an octave
+~notes = (~notes / 4) ++ (~notes / 2) ++ (~notes) ++ (~notes * 2) ++ [ 4 ];//full dial range
+
+~fontDef = Font(Font.default.name, 30);//note on!!
+~fontTmp = Font(Font.default.name, 15);//regular size
 
 ~cont = { arg label = "is?", close = { };
 	var x, y;
@@ -57,23 +67,24 @@ s.boot;
 	ref;
 };
 
-~noteButt = { arg num = 0, muller = ~noteMul;
+//Below are not reentrant
+
+~noteButt = { arg num = 0;
 	var butt = ~butt.value([
-		"#" ++ num.asDigit, "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"
+		num.asDigit, "-", "=", "#", "~"
 	], [
-		Color.red, Color.white, Color.grey, Color.white, Color.white, Color.grey, Color.white, Color.grey, Color.white,
-		Color.white, Color.grey, Color.white, Color.grey
+		Color.grey, Color.red, Color.yellow, Color.green, Color.blue
 	], [{ arg butt;
-		muller.put(num, ~notes.at(butt.value));
+		~envSel.put(num, butt.value);
 		//butt.value.postln; //debug -- language does not support variable references to future closures
 		//~noteMul.postln; //ok!
 	}]);
 	~fonty.put(num, butt);
 };
 
-~noteArr = { arg muller = ~noteMul;
+~noteArr = {
 	8.do { arg i;
-		~noteButt.value(i, muller);//make 8 note keys
+		~noteButt.value(i);//make 8 note keys
 	};
 };
 
@@ -81,7 +92,7 @@ s.boot;
 
 ~noteKnobs = {
 	8.do { arg i;
-		~knob.value("@" ++ i.asDigit, Color.blue, {}, ~noteSpec);
+		~knob.value("@" ++ i.asDigit, Color.blue, { |note| ~noteMul.put(i, ~notes.at(note + 24)); }, ~noteSpec);
 	};
 };
 );
@@ -107,7 +118,8 @@ s.doWhenBooted({
 			AppClock.play({
 				~fonty.at(~noteIdx).font = ~fontDef;// big
 			});
-			Synth(\hi, [ \mul, ~noteMul.at(~noteIdx) ]);
+			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
+			Synth(\hi, [ \mul, ~noteMul.at(~noteIdx), \env, ~envSel.at(~noteIdx) ]);
 			AppClock.play({
 				~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp;
 			});
@@ -137,7 +149,7 @@ s.doWhenBooted({
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 		~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
 
-		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/15);
+		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; }, ~bpmSpec, 1/30);
 		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);
@@ -161,12 +173,28 @@ s.doWhenBooted({
 
 		~noteArr.value;
 
-		SynthDef(\hi, {|mul = 1.0, a = 0.01, r = 1|
+		//N.B.==================================
+		// WARNING: Any parameter to a SynthDef
+		//======================================
+		// They will become UGen controls. This will prevent array indexing,
+		// and other things depending on the scalar nature of integers.
+		// Kind of obvious when you think deeper about how the server runs.
+
+		SynthDef(\hi, {|mul = 1.0, env|
+			//" ", "-", "=", "#", "~"
+			var envArr = [
+				nil,
+				Env.perc(0.01, 0.1),
+				Env.perc,
+				Env.perc(0.1, 1.5),
+				Env.perc(0.5, 0.5)
+			];
 			var temp = SinOsc.ar(~hz.kr * mul, ~buzz.kr * ~out.kr,
-				(1 + (~ring.kr * ~out.kr)) * EnvGen.kr(Env.perc(a, r, 1.0), doneAction: 2));
+				(1 + (~ring.kr * ~out.kr)) * EnvGen.kr(envArr.at(env.asInteger), doneAction: 2));
 			Out.ar(~out, temp);
 			Out.ar(0, temp * ~vol.kr);//output audio
-		}, variants: (alpha: [a: 0.5, r: 0.5], beta: [a: 3, r: 0.01], gamma: [a: 0.01, r: 4])
+		},
+		variants: (alpha: [a: 0.5, r: 0.5], beta: [a: 3, r: 0.01], gamma: [a: 0.01, r: 4])
 		).add;
 	);
 
