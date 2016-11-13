@@ -179,9 +179,9 @@ s.doWhenBooted({
 		~knob.value("SH3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
 		~knob.value("SH5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/100);
 		~knob.value("SH7", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/100);
-		~knob.value("SH11", Color.green, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/200);
-		~knob.value("SH13", Color.green, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/200);
-		~knob.value("SH17", Color.green, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/400);
+		~knob.value("SH11", Color.green, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/150);
+		~knob.value("SH13", Color.green, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/150);
+		~knob.value("SH17", Color.green, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/150);
 
 		//row 3 and 4
 		~noteKnobs.value;
