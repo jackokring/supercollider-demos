@@ -22,7 +22,6 @@ s.boot;
 ~noteMul = [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ];
 ~envSel = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
 
-//" ", "-", "=", "#", "~"
 ~envArr = [
 	'hi.null',
 	'hi.note',
@@ -58,35 +57,35 @@ s.boot;
 	};
 	ref.setColors(knobColors: [ color, Color.black, Color.white, Color.black ]);
 	ref.doAction;//eval once
-	~patch.put(label, ref);
+	~patch.put(label ++ "-" ++ ~winCnt, ref);
 	ref;
 };
 
-~butt = { arg states = [ "is?" ], colors = [ Color.white ], actions = [{ }];
+~butt = { arg state = "is?", colors = [ Color.white ], actions = [{ }];
 	var ref = Button(~win, 50@90);
 	ref.action = {
 		actions.at(ref.value % actions.size).value(ref.value);
 	};
 	ref.font = ~fontTmp;
-	ref.states = states.collect({ arg it, i;
-		[ it, Color.black, colors.at(i % colors.size) ];
+	ref.states = colors.collect({ arg it, i;
+		[ state, Color.black, colors.at(i) ];
 	});
 	ref.doAction;//eval once
-	~patch.put(states.at(0), ref);
+	~patch.put(state ++ "-" ++ ~winCnt, ref);
 	ref;
 };
 
 //Below are not reentrant
 
 ~noteButt = { arg num = 0;
-	var butt = ~butt.value([
-		num.asDigit, "-", "=", "#", "~"
-	], [
-		Color.grey, Color.red, Color.yellow, Color.green, Color.blue
-	], [{ arg butt;
-		~envSel.put(num, butt.value);
-		//butt.value.postln; //debug -- language does not support variable references to future closures
-		//~noteMul.postln; //ok!
+	var butt = ~butt.value(
+		num.asDigit,
+		[
+			Color.grey, Color.red, Color.yellow, Color.green, Color.blue
+		], [{ arg butt;
+			~envSel.put(num, butt.value);
+			//butt.value.postln; //debug -- language does not support variable references to future closures
+			//~noteMul.postln; //ok!
 	}]);
 	~fonty.put(num, butt);
 };
@@ -114,7 +113,7 @@ s.doWhenBooted({
 	"BOOT COMPLETE!".postln;
 	(
 		// Make default window
-		~cont.value("Global Hi",  {
+		~cont.value("Global Hi (MIDI ch 1)",  {
 			~sync.clear;
 			s.quit;
 			Window.closeAll;
@@ -123,13 +122,19 @@ s.doWhenBooted({
 		~jig = 0.0;
 		~resid = 0.0;
 		~tick = {arg beats, time, clock;
-			AppClock.play({
-				~fonty.at(~noteIdx).font = ~fontDef;// big
-			});
+			//N.B. ==========================================
+			// WARNING: There is a one beat scheduling delay
+			//===============================================
 			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
 			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \env, ~envSel.at(~noteIdx) ]);
+			//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
+			//I think this is to do with the tick already having passed at the schedule, and jitter effect
+			//cancellation.
 			AppClock.play({
-				~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp;
+				~fonty.at((~noteIdx + 6) % 8).font = ~fontTmp;//Hence previous but one "offed"
+			});
+			AppClock.play({
+				~fonty.at((~noteIdx + 7) % 8).font = ~fontDef;//Hence previous note "displayed"
 			});
 			~noteIdx = (~noteIdx + 1) % 8;
 			~resid = ((~jig).bilinrand - ~resid) * 0.95;
@@ -144,11 +149,11 @@ s.doWhenBooted({
 		~buzz = Bus.control(s);
 		~tmpo = Bus.control(s);
 
-		~butt.value(["RUN", "RUN"], [ Color.red, Color.green ], [
+		~butt.value("RUN", [ Color.red, Color.green ], [
 			{ ~sync.clear; },
-			{ ~fonty.at(~noteIdx).font = ~fontTmp; ~noteIdx = 7; ~sync.play(~tick, 0); }
+			{ ~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp; ~noteIdx = 0; ~sync.play(~tick); }
 		]);
-		~butt.value(["MUTE", "MUTE"], [ Color.green, Color.red ], [
+		~butt.value("MUTE", [ Color.green, Color.red ], [
 			{ s.unmute; },
 			{ s.mute; }
 		]);
@@ -159,7 +164,7 @@ s.doWhenBooted({
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 		~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
 
-		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/30);
+		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);
 		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);
@@ -240,10 +245,102 @@ s.doWhenBooted({
 	//================
 	(
 
-		~cont.value("HiHo");
+		~cont.value("HiHo (MIDI ch 2)");
+		MIDIIn.connectAll;
+		~midiSrc = 0;
 
-		~butt.value(["ON\nJZ", "OFF"], [ Color.green, Color.red ]);
+		~midiSpec = ControlSpec(0, MIDIClient.sources.size - 1, \lin, 1, 0);
+		~knob.value("MIDI In", Color.red, { |val| ~midiSrc = val; }, ~midiSpec);
 
+		~ratioSpec = ControlSpec(1, 8, \lin, 1 / 8, 1);
+		~knob.value("Quick", Color.yellow, { }, ~ratioSpec);
+		~knob.value("Slow", Color.yellow, { }, ~ratioSpec);
+
+
+
+		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
+		~knob.value("VolMod", Color.green, { }, ~polSpec, 1/100);
+		~knob.value("RingMod", Color.green, { }, ~polSpec, 1/100);
+		~knob.value("TuneMod", Color.red, { }, ~polSpec, 1/100);
+		~knob.value("BuzzMod", Color.green, { }, ~polSpec, 1/100);
+
+		~butt.value("SYNC", [ Color.green, Color.red ], [
+			{ }
+		]);
+
+
+
+	);
+
+	//==============
+	// MIDI Handler
+	//==============
+
+	//drums on 10?
+	(
+		//in pairs for 14 bit resolution?
+		MIDIFunc.cc({
+
+		});
+
+		//Must be free, so on system clock?
+		//Can immediate cotrol buses, but for synth triggers, que on a TempoClock at midiClock rate.
+		//Calc rate Based on tempo PLL.
+		MIDIFunc.noteOn({
+
+		});
+
+		//Like above.
+		MIDIFunc.noteOff({
+
+		});
+
+		//feed into tune control?
+		MIDIFunc.bend({
+
+		});
+
+		//patch change timbral
+		MIDIFunc.program({
+
+		});
+
+		//+1 @ 6 midi clocks (14 bit)
+		//Use a modulo and subtract one TempoClock!
+		//If less than zero, then initial, add one beat and drop 1st!!
+		MIDIFunc.songPosition({
+
+		});
+
+		//notes change tonal
+		MIDIFunc.songSelect({
+
+		});
+
+		//24 per quater note ... where as "ticks" can get as high as silly, for sync, and can vary.
+		MIDIFunc.midiClock({
+
+		});
+
+		//Create midi TempoClock (and drop initial beat)
+		MIDIFunc.start({
+
+		});
+
+		//Stop midi TempoClock
+		MIDIFunc.stop({
+
+		});
+
+		//Run midi TempoClock
+		MIDIFunc.continue({
+
+		});
+
+		//full instrument reset
+		MIDIFunc.reset({
+
+		});
 	);
 
 	//======
@@ -251,3 +348,5 @@ s.doWhenBooted({
 	//======
 });
 );
+
+
