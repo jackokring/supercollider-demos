@@ -223,7 +223,7 @@ s.doWhenBooted({
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
 
 			var subz = SinOsc.ar( hz / 2, stip, ~sub.kr(1, 0)) +
-			SinOsc.ar( hz / 3, stip, ~sub.kr(1, 1)) +
+			SinOsc.ar( hz / 9, stip, ~sub.kr(1, 1)) + //The nine fix. Both pseudo and real Fermat in one.
 			SinOsc.ar( hz / 5, stip, ~sub.kr(1, 2)) +
 			SinOsc.ar( hz / 17, stip, ~sub.kr(1, 3));
 
@@ -274,13 +274,13 @@ s.doWhenBooted({
 		~a128Spec = ControlSpec(1, 128, \lin, 1, 1);
 		~knob.value("Sync", Color.red, { }, ~a128Spec);
 
-		//row 2 - Program
+		//row 2 - Program (control timbrals of Hi)
 
 
-		//row 3 - Song
+		//row 3 - Song (control tonals of Hi)
 
 
-		//row 4
+		//row 4 - Sequence (control temporals of Hi)
 
 
 	);
