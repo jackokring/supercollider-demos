@@ -7,6 +7,9 @@
 //I have used functions as classes, and provided some common control constructors. Some are NOT reentrant.
 //Happy coding!
 
+~outBusBase = 0;
+~path = PathName(thisProcess.nowExecutingPath).parentPath;//for +/+
+
 //=========================
 // START AND TEMPLATE CTRL
 //=========================
@@ -111,6 +114,10 @@ s.boot;
 (
 s.doWhenBooted({
 	"BOOT COMPLETE!".postln;
+
+	//==============
+	// SYNTH GUI Hi
+	//==============
 	(
 		// Make default window
 		~cont.value("Global Hi (MIDI ch 1)",  {
@@ -126,7 +133,7 @@ s.doWhenBooted({
 			// WARNING: There is a one beat scheduling delay
 			//===============================================
 			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
-			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \env, ~envSel.at(~noteIdx) ]);
+			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx) ]);
 			//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 			//I think this is to do with the tick already having passed at the schedule, and jitter effect
 			//cancellation.
@@ -204,7 +211,7 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1|
+		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1| //last for variants
 			var out = Bus.audio(s);//the output (pre volume)
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
@@ -229,7 +236,7 @@ s.doWhenBooted({
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
 
 			Out.ar(out, order);
-			Out.ar(0, (lpf * ~vol.kr)!2);//output audio
+			Out.ar(~outBusBase, (lpf * ~vol.kr)!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
@@ -245,18 +252,18 @@ s.doWhenBooted({
 	//================
 	(
 
-		~cont.value("HiHo (MIDI ch 2)");
+		//row 1 - Basic LFO application
+		~cont.value("Captain HiHo (MIDI ch 2)");
+		MIDIClient.init;
 		MIDIIn.connectAll;
-		~midiSrc = 0;
+		~midiSrc = nil;
 
-		~midiSpec = ControlSpec(0, MIDIClient.sources.size - 1, \lin, 1, 0);
-		~knob.value("MIDI In", Color.red, { |val| ~midiSrc = val; }, ~midiSpec);
+		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
+		~knob.value("MIDI In", Color.red, { |val| ~midiSrc = MIDIClient.sources[val].asMIDIInPortUID; }, ~midiSpec);
 
 		~ratioSpec = ControlSpec(1, 8, \lin, 1 / 8, 1);
 		~knob.value("Quick", Color.yellow, { }, ~ratioSpec);
 		~knob.value("Slow", Color.yellow, { }, ~ratioSpec);
-
-
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
 		~knob.value("VolMod", Color.green, { }, ~polSpec, 1/100);
@@ -264,10 +271,16 @@ s.doWhenBooted({
 		~knob.value("TuneMod", Color.red, { }, ~polSpec, 1/100);
 		~knob.value("BuzzMod", Color.green, { }, ~polSpec, 1/100);
 
-		~butt.value("SYNC", [ Color.green, Color.red ], [
-			{ }
-		]);
+		~a128Spec = ControlSpec(1, 128, \lin, 1, 1);
+		~knob.value("Sync", Color.red, { }, ~a128Spec);
 
+		//row 2 - Program
+
+
+		//row 3 - Song
+
+
+		//row 4
 
 
 	);
@@ -278,8 +291,13 @@ s.doWhenBooted({
 
 	//drums on 10?
 	(
-		//in pairs for 14 bit resolution?
+		//In pairs for 14 bit resolution?
+		//So with 32 controls per machine @ 14 bit, that's 64 controllers per machine.
+		//The upper 64-ish are for some unsupported channel mode bull. (I suggest an all notes off in such case.
+		//And perhaps a 13 bit blip code. :D ) Just ignore them, or do a remap
+		//LSB @ (controller + 32)
 		MIDIFunc.cc({
+			arg val, ctl, chan, uid;
 
 		});
 
@@ -295,24 +313,36 @@ s.doWhenBooted({
 
 		});
 
-		//feed into tune control?
+		//Feed into tune control.
+		//Center 2000 hex
 		MIDIFunc.bend({
 
 		});
 
-		//patch change timbral
+		//A monphonic max pressure event.
+		MIDIFunc.touch({
+
+		});
+
+		//A note aftertouch event.
+		MIDIFunc.polytouch({
+
+		});
+
+		//Patch change timbral
 		MIDIFunc.program({
 
 		});
 
-		//+1 @ 6 midi clocks (14 bit)
+		//+1 @ 6 midi clocks (14 bit) => 4 per Quarter beat => 16 per beat => 1024 beats per song
+		// => 128 loops of General Hi ...
 		//Use a modulo and subtract one TempoClock!
-		//If less than zero, then initial, add one beat and drop 1st!!
+		//If less than zero, then initial, add one beat and drop 1st!! (while stopped?)
 		MIDIFunc.songPosition({
 
 		});
 
-		//notes change tonal
+		//Notes change tonal.
 		MIDIFunc.songSelect({
 
 		});
@@ -327,18 +357,33 @@ s.doWhenBooted({
 
 		});
 
-		//Stop midi TempoClock
+		//Stop midi TempoClock.
 		MIDIFunc.stop({
 
 		});
 
-		//Run midi TempoClock
+		//Run midi TempoClock.
 		MIDIFunc.continue({
 
 		});
 
-		//full instrument reset
+		//Full instrument reset.
 		MIDIFunc.reset({
+
+		});
+
+		//Play A 440 tuning tone.
+		MIDIFunc.tuneRequest({
+
+		});
+
+		//Launch a half second callback, to terminate sound, after killing any existing callback.
+		MIDIFunc.activeSense({
+
+		});
+
+		//F0 7E = EOF, ACK, NAK, Wait, Cancel, File Dump Data Packet, File Dump Request
+		MIDIFunc.sysex({
 
 		});
 	);
