@@ -17,7 +17,12 @@ GUI updating, the trend is for the GUI to updated at a slower rate. Not that you
 this is a little more involved than would first appear, and involves controller ID functions, and an occasional value poke back.
 It has the effect of snapping GUI controls back sometimes after being altered in the GUI. The motors are strong in this one!
 
-There is the General Hi synth, which does the appegiation, and generates some timbral opertunities. It's a filtered harmonic
+There is the *General Hi* synth, which does the appegiation, and generates some timbral opertunities. It's a filtered harmonic
 feedback AM/PM/Sub-harmonic hybrid, and can make very fat sounds, with ease. There is no direct LFO, or much envelope shaping.
 Don't worry, this is expected, as the HIHo has all the extras which are useful as it is a modulation synth, producing no
-sound itself.
+sound itself. Be careful in the twist as some of those dials have quite an effect.
+
+The generation is basically 2 stage phase modulation (4 operator, 3 into 1), with 2 feedbacks. This is fed into a filter 6dB
+and some frequency doubler Q plate with soft clip, followed by and extra 6dB (dry or wet). The mix is then a feedback source for
+both the base operator as AM and PM. The final control feeds the mix to PM the 3 sub harmonic oscillators an the filter cut.
+It can all lead to chaos on just a sine of the times. 

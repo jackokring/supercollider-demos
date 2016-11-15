@@ -133,7 +133,7 @@ s.doWhenBooted({
 			// WARNING: There is a one beat scheduling delay
 			//===============================================
 			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
-			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx) ]);
+			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \n, ~noteIdx ]);
 			//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 			//I think this is to do with the tick already having passed at the schedule, and jitter effect
 			//cancellation.
@@ -210,10 +210,10 @@ s.doWhenBooted({
 		// Kind of obvious when you think deeper about how the server runs.
 
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Bus.control(s);//the output (pre volume)
+		~outFB = Bus.control(s, 8);//the output (pre volume)
 
-		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1| //last for variants
-			var out = ~outFB.kr;
+		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1, n = 0| //last for variants
+			var out = ~outFB.subBus(n).kr;
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
 			var stip = out * ~sub.kr(1, 4);// <5
@@ -238,7 +238,7 @@ s.doWhenBooted({
 
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
 
-			Out.kr(~outFB, order);//Synthesis complete
+			Out.kr(~outFB.subBus(n), order);//Synthesis complete
 
 			//Render out
 			Out.ar(~outBusBase, (order * ~vol.kr)!2);//output audio
