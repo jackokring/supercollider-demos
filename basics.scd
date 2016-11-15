@@ -169,13 +169,12 @@ s.doWhenBooted({
 		~modSpec = ControlSpec(0, 100, \lin, 0, 0);
 
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
-		~ratioSpec = ControlSpec(-24, 24, \lin, 0, 0);
 
 		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);
 		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
-		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/30);
+		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/10);
 
 		~knob.value("Tune", Color.red, { |val| ~hz.set(440 * (2 ** (val / 12))); }, ~noteSpec);
 		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/10);
@@ -185,10 +184,11 @@ s.doWhenBooted({
 		~sub = Bus.control(s, 7);
 
 		//one octave up filter
-		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~ratioSpec);
+		~filterSpec = ControlSpec(-12, 36, \lin, 0, 12);
+		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~filterSpec);
 
 		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
-		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/50);
+		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/30);
 
 		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
 		~knob.value("SB9", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
@@ -216,10 +216,10 @@ s.doWhenBooted({
 			var out = ~outFB.kr;
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
-			var stip = out * ~sub.kr(1, 4);
-			var filt = hz * ~lpf.kr;
+			var stip = out * ~sub.kr(1, 4);// <5
+			var filt = (hz * ~lpf.kr) * (1 + (stip / 5));
 			var pm = ~buzz.kr * out;
-			var am = (1 + (~ring.kr * out)) / 2;
+			var am = 1 + (~ring.kr * out);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
 
@@ -228,10 +228,12 @@ s.doWhenBooted({
 			SinOsc.ar( hz / 5, stip, ~sub.kr(1, 2)) +
 			SinOsc.ar( hz / 17, stip, ~sub.kr(1, 3));
 
-			var osc = SinOsc.ar(hz, pm + subz, am * env);
+			var osc = SinOsc.ar(hz, pm + subz, (am * env) / 2);
 			var lpf = LPF.ar(osc, filt);
 
-			var plate = ((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf;
+			var q = (((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf).clip2(1.0);//hard
+			//A nicked cubic clip with end differential matching.
+			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
