@@ -165,37 +165,35 @@ s.doWhenBooted({
 			{ s.mute; }
 		]);
 
-		~bpmSpec = ControlSpec(60, 340, \lin, 1, 200);
+		~bpmSpec = ControlSpec(120, 360, \lin, 1, 240);
 		~modSpec = ControlSpec(0, 100, \lin, 0, 0);
 
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
-		~freqSpec = ControlSpec(110, 1760, \exp, 0, 440);
+		~ratioSpec = ControlSpec(-24, 24, \lin, 0, 0);
 
 		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);
 		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
 
-		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);
-			~vol.set(val); }, ~volSpec);
+		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
 		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/30);
 
-		~knob.value("Tune", Color.red, { |val| ~hz.set(val); }, ~freqSpec);
-		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/3);
+		~knob.value("Tune", Color.red, { |val| ~hz.set(440 * (2 ** (val / 12))); }, ~noteSpec);
+		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/10);
 
 		//Row 2
 		~lpf = Bus.control(s);
 		~sub = Bus.control(s, 7);
-		~ratioSpec = ControlSpec(-24, 24, \lin, 0, 0);
 
 		//one octave up filter
-		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** ((val / 12)) + 1); }, ~ratioSpec);
+		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~ratioSpec);
 
 		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
-		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/2);
+		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/50);
 
-		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/50);
-		~knob.value("SB3", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/50);
-		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/50);
-		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/50);
+		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
+		~knob.value("SB9", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
+		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/20);
+		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/20);
 
 		~knob.value("Stiple", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
 
@@ -211,14 +209,17 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
+		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
+		~outFB = Bus.control(s);//the output (pre volume)
+
 		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1| //last for variants
-			var out = Bus.audio(s);//the output (pre volume)
+			var out = ~outFB.kr;
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
-			var stip = out.ar * ~sub.kr(1, 4);
-			var filt = hz * (~lpf.kr + (stip / 10));
-			var pm = ~buzz.kr * out.ar;
-			var am = (1 + (~ring.kr * out.ar)) / 2;
+			var stip = out * ~sub.kr(1, 4);
+			var filt = hz * ~lpf.kr;
+			var pm = ~buzz.kr * out;
+			var am = (1 + (~ring.kr * out)) / 2;
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
 
@@ -227,7 +228,7 @@ s.doWhenBooted({
 			SinOsc.ar( hz / 5, stip, ~sub.kr(1, 2)) +
 			SinOsc.ar( hz / 17, stip, ~sub.kr(1, 3));
 
-			var osc = am * SinOsc.ar(hz, pm + subz, env);
+			var osc = SinOsc.ar(hz, pm + subz, am * env);
 			var lpf = LPF.ar(osc, filt);
 
 			var plate = ((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf;
@@ -235,8 +236,10 @@ s.doWhenBooted({
 
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
 
-			Out.ar(out, order);
-			Out.ar(~outBusBase, (lpf * ~vol.kr)!2);//output audio
+			Out.kr(~outFB, order);//Synthesis complete
+
+			//Render out
+			Out.ar(~outBusBase, (order * ~vol.kr)!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
