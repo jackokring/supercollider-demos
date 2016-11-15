@@ -14,7 +14,28 @@
 // START AND TEMPLATE CTRL
 //=========================
 (
+s = Server.default;
 s.boot;
+
+~midiCC = [
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
+];//32 controllers and 16 channels
+
 ~sync = TempoClock(1);
 ~patch = Dictionary.new(1024);
 ~win = nil;
@@ -124,16 +145,22 @@ s.doWhenBooted({
 			~sync.clear;
 			s.quit;
 			Window.closeAll;
+			MIDIClient.disposeClient;
 		});
 		~win.alwaysOnTop = true;
 		~jig = 0.0;
 		~resid = 0.0;
+
+		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
+		~outFB = Bus.control(s, 8);//the output (pre volume)
+		//Always pass only necessary busses into Synth, as the SynthDef CAN'T east Out index a subBus!!!
+
 		~tick = {arg beats, time, clock;
 			//N.B. ==========================================
 			// WARNING: There is a one beat scheduling delay
 			//===============================================
 			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
-			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \n, ~noteIdx ]);
+			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \n, ~outFB.subBus(~noteIdx) ]);
 			//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 			//I think this is to do with the tick already having passed at the schedule, and jitter effect
 			//cancellation.
@@ -205,15 +232,12 @@ s.doWhenBooted({
 		//N.B.==================================
 		// WARNING: Any parameter to a SynthDef
 		//======================================
-		// They will become UGen controls. This will prevent array indexing,
+		// They will become (UGens via?) an OutputProxy controls. This will prevent array indexing, BAD?!!
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Bus.control(s, 8);//the output (pre volume)
-
 		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1, n = 0| //last for variants
-			var out = ~outFB.subBus(n).kr;
+			var out = ~outFB.kr;
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
 			var stip = out * ~sub.kr(1, 4);// <5
@@ -231,17 +255,18 @@ s.doWhenBooted({
 			var osc = SinOsc.ar(hz, pm + subz, (am * env) / 2);
 			var lpf = LPF.ar(osc, filt);
 
-			var q = (((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf).clip2(1.0);//hard
+			var q = (((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf).clip(-1.0, 1.0);//hard
 			//A nicked cubic clip with end differential matching.
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
 
-			Out.kr(~outFB.subBus(n), order);//Synthesis complete
+
+			Out.kr(~outFB, order);//Synthesis complete
 
 			//Render out
-			Out.ar(~outBusBase, (order * ~vol.kr)!2);//output audio
+			OffsetOut.ar(~outBusBase, (order * ~vol.kr)!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
@@ -303,7 +328,16 @@ s.doWhenBooted({
 		//LSB @ (controller + 32)
 		MIDIFunc.cc({
 			arg val, ctl, chan, uid;
-
+			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
+				case
+				{ ctl < 32 } {//MSB
+					~midiCC[chan][ctl] = (~midiCC[chan][ctl] % 128) + (128 * val);
+				}
+				{ ctl < 64 } {//LSB
+					~midiCC[chan][ctl] = ((~midiCC[chan][ctl]).div(128) * 128) + val;
+				}
+				{ true } { ("CC:" ++ ctl ++ " ON: " ++ (chan + 1)).postln; };//Debug
+			});
 		});
 
 		//Must be free, so on system clock?
