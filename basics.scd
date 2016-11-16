@@ -177,11 +177,10 @@ s.doWhenBooted({
 
 		//row 1
 		~vol = Bus.control(s);
-		~ring = Bus.control(s);
-
 		~hz = Bus.control(s);
 		~buzz = Bus.control(s);
 		~tmpo = Bus.control(s);
+		~ring = Bus.control(s);
 
 		~butt.value("RUN", [ Color.red, Color.green ], [
 			{ ~sync.clear; },
@@ -197,14 +196,14 @@ s.doWhenBooted({
 
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 
-		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);
-		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);
+		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);//Not and is control bus
+		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);//Not control bus
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
-		~knob.value("Ring", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/10);
+		~knob.value("Stiple", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/20);
 
 		~knob.value("Tune", Color.red, { |val| ~hz.set(440 * (2 ** (val / 12))); }, ~noteSpec);
-		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/10);
+		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/20);
 
 		//Row 2
 		~lpf = Bus.control(s);
@@ -216,13 +215,12 @@ s.doWhenBooted({
 
 		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
 		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/30);
+		~knob.value("??", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
 
 		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
 		~knob.value("SB9", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
 		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/20);
 		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/20);
-
-		~knob.value("Stiple", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
 
 		//row 3 and 4
 		~noteKnobs.value;
@@ -240,10 +238,13 @@ s.doWhenBooted({
 			var out = ~outFB.kr;
 			var hz = ~hz.kr * mul;
 			var rl = ~tmpo.kr / 20;
-			var stip = out * ~sub.kr(1, 4);// <5
-			var filt = (hz * ~lpf.kr) * (1 + (stip / 5));
+			var stip = out * (~ring.kr).lag;// <5
+			var filt = ((hz * ~lpf.kr).lag * (1 + stip));//Pop elimination
 			var pm = ~buzz.kr * out;
-			var am = 1 + (~ring.kr * out);
+
+			//AM is done via stipling of filter
+			//Also maintains DC
+			//var am = 1 + (~ring.kr * out);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
 
@@ -252,7 +253,7 @@ s.doWhenBooted({
 			SinOsc.ar( hz / 5, stip, ~sub.kr(1, 2)) +
 			SinOsc.ar( hz / 17, stip, ~sub.kr(1, 3));
 
-			var osc = SinOsc.ar(hz, pm + subz, (am * env) / 2);
+			var osc = SinOsc.ar(hz, pm + subz, env);
 			var lpf = LPF.ar(osc, filt);
 
 			var q = (((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf).clip(-1.0, 1.0);//hard
@@ -261,7 +262,6 @@ s.doWhenBooted({
 			var link = LPF.ar(plate, filt);
 
 			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
-
 
 			Out.kr(~outFB, order);//Synthesis complete
 
