@@ -215,7 +215,7 @@ s.doWhenBooted({
 
 		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
 		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/30);
-		~knob.value("??", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 1/20);
+		~knob.value("Thin", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 0.0095);
 
 		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
 		~knob.value("SB9", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
@@ -261,7 +261,8 @@ s.doWhenBooted({
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
-			var order = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
+			var ac = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
+			var order = HPF.ar(ac, (~sub.kr(1, 4).lag + 0.05) * filt);//DC removal and low cut
 
 			Out.kr(~outFB, order);//Synthesis complete
 
@@ -297,7 +298,7 @@ s.doWhenBooted({
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
 		~knob.value("VolMod", Color.green, { }, ~polSpec, 1/100);
-		~knob.value("RingMod", Color.green, { }, ~polSpec, 1/100);
+		~knob.value("StipMod", Color.green, { }, ~polSpec, 1/100);
 		~knob.value("TuneMod", Color.red, { }, ~polSpec, 1/100);
 		~knob.value("BuzzMod", Color.green, { }, ~polSpec, 1/100);
 
