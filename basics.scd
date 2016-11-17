@@ -17,7 +17,32 @@
 s = Server.default;
 s.boot;
 
+//=======================
+// MAIN MIDI CONTROL BUS
+//=======================
 ~midiCC = [
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32),
+	Bus.control(s, 32)
+];//32 controllers and 16 channels
+
+//=========
+// CC SPEC
+//=========
+~midiCCSpec = [
 	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
 	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
@@ -36,10 +61,13 @@ s.boot;
 	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
 ];//32 controllers and 16 channels
 
+//=============================
+//MASTER CLOCK AND WIN COUNTER
+//=============================
 ~sync = TempoClock(1);
-~patch = Dictionary.new(1024);
 ~win = nil;
 ~winCnt = 0;
+~ctlCnt = 0;
 ~noteIdx = 0;
 ~fonty = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ];
 
@@ -60,6 +88,9 @@ s.boot;
 ~fontDef = Font(Font.default.name, 30);//note on!!
 ~fontTmp = Font(Font.default.name, 15);//regular size
 
+//====================
+// A WINDOW CONTAINER
+//====================
 ~cont = { arg label = "is?", close = { };
 	var x, y;
 	x = (Window.screenBounds.width / 2) + (40 * ~winCnt) - 220;
@@ -72,16 +103,16 @@ s.boot;
 	~win;//out
 };
 
-~knob = { arg label = "is?", color = Color.grey, post = { }, spec = ControlSpec(-1, 1, \lin), scale = 1.0;
-	var flow;
+~knob = { arg label = "is?", color, spec;
 	var ref = EZKnob(~win, label: label, controlSpec: spec);
+	var chan = ~ctlCnt.div(16);
+	var ctl = ~ctlCnt % 16;
+	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
-		flow = scale * ref.value;
-		post.value(flow);
+		~midiCC[chan][ctl].set(ref.value);//Set bus
 	};
 	ref.setColors(knobColors: [ color, Color.black, Color.white, Color.black ]);
 	ref.doAction;//eval once
-	~patch.put(label ++ "-" ++ ~winCnt, ref);
 	ref;
 };
 
@@ -95,7 +126,6 @@ s.boot;
 		[ state, Color.black, colors.at(i) ];
 	});
 	ref.doAction;//eval once
-	~patch.put(state ++ "-" ++ ~winCnt, ref);
 	ref;
 };
 
@@ -156,6 +186,7 @@ s.doWhenBooted({
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T east Out index a subBus!!!
 
 		~tick = {arg beats, time, clock;
+			clock.tempo = ~midiCC[0][2] / 60;//master tempo
 			//N.B. ==========================================
 			// WARNING: There is a one beat scheduling delay
 			//===============================================
@@ -171,17 +202,11 @@ s.doWhenBooted({
 				~fonty.at((~noteIdx + 7) % 8).font = ~fontDef;//Hence previous note "displayed"
 			});
 			~noteIdx = (~noteIdx + 1) % 8;
-			~resid = ((~jig).bilinrand - ~resid) * 0.95;
+			~resid = ((~midiCC[0][3] / 500).bilinrand - ~resid) * 0.95;
 			1 + ~resid;//with retrig
 		};
 
 		//row 1
-		~vol = Bus.control(s);
-		~hz = Bus.control(s);
-		~buzz = Bus.control(s);
-		~tmpo = Bus.control(s);
-		~ring = Bus.control(s);
-
 		~butt.value("RUN", [ Color.red, Color.green ], [
 			{ ~sync.clear; },
 			{ ~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp; ~noteIdx = 0; ~sync.play(~tick); }
@@ -193,11 +218,10 @@ s.doWhenBooted({
 
 		~bpmSpec = ControlSpec(120, 360, \lin, 1, 240);
 		~modSpec = ControlSpec(0, 100, \lin, 0, 0);
-
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 
-		~knob.value("Tempo", Color.red, { |val| ~sync.tempo = val; ~tmpo.set(val) }, ~bpmSpec, 1/60);//Not and is control bus
-		~knob.value("Jiggle", Color.yellow, { |val| ~jig = val; }, ~modSpec, 1/5000);//Not control bus
+		~knob.value("Tempo", Color.red, ~bpmSpec);
+		~knob.value("Jiggle", Color.yellow, ~modSpec);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
 		~knob.value("Stiple", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/20);
@@ -214,7 +238,7 @@ s.doWhenBooted({
 		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~filterSpec);
 
 		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
-		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/30);
+		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/20);
 		~knob.value("Thin", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 0.0095);
 
 		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
@@ -330,12 +354,25 @@ s.doWhenBooted({
 		MIDIFunc.cc({
 			arg val, ctl, chan, uid;
 			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
+				//BUS IS ASYNC SO CALLBACK SET
+				var bus = ~midiCC[chan].subBus(ctl % 32);
+				var spec = ~midiCCSpec[chan][ctl % 32];
 				case
 				{ ctl < 32 } {//MSB
-					~midiCC[chan][ctl] = (~midiCC[chan][ctl] % 128) + (128 * val);
+					bus.get( { |val|
+						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
+						val = (val % 128) + (128 * val);
+						val = spec.map(val) / 16383;//back to 0 to 1
+						bus.set(val);
+					});
 				}
 				{ ctl < 64 } {//LSB
-					~midiCC[chan][ctl] = ((~midiCC[chan][ctl]).div(128) * 128) + val;
+					bus.get( { |val|
+						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
+						val = val.div(128) * 128 + val;
+						val = spec.map(val) / 16383;//back to 0 to 1
+						bus.set(val);
+					});
 				}
 				{ true } { ("CC:" ++ ctl ++ " ON: " ++ (chan + 1)).postln; };//Debug
 			});
