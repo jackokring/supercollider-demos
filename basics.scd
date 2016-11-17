@@ -181,6 +181,7 @@ s.doWhenBooted({
 		~jig = 0.0;
 		~resid = 0.0;
 
+		//FB VIA A CONTROL BUS
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
 		~outFB = Bus.control(s, 8);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T east Out index a subBus!!!
@@ -224,27 +225,25 @@ s.doWhenBooted({
 		~knob.value("Jiggle", Color.yellow, ~modSpec);
 
 		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
-		~knob.value("Stiple", Color.green, { |val| ~ring.set(val); }, ~modSpec, 1/20);
+		~knob.value("Stiple", Color.green, ~modSpec);
 
 		~knob.value("Tune", Color.red, { |val| ~hz.set(440 * (2 ** (val / 12))); }, ~noteSpec);
-		~knob.value("Buzz", Color.green, { |val| ~buzz.set(val); }, ~modSpec, 1/20);
+		~knob.value("Buzz", Color.green, ~modSpec);
 
 		//Row 2
-		~lpf = Bus.control(s);
-		~sub = Bus.control(s, 7);
 
 		//one octave up filter
 		~filterSpec = ControlSpec(-12, 36, \lin, 0, 12);
 		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~filterSpec);
 
-		~knob.value("Order", Color.yellow, { |val| ~sub.setAt(5, val); }, ~modSpec, 1/100);
-		~knob.value("Plate", Color.yellow, { |val| ~sub.setAt(6, val); }, ~modSpec, 1/20);
-		~knob.value("Thin", Color.yellow, { |val| ~sub.setAt(4, val); }, ~modSpec, 0.0095);
+		~knob.value("Order", Color.yellow, ~modSpec);
+		~knob.value("Plate", Color.yellow, ~modSpec);
+		~knob.value("Thin", Color.yellow, ~modSpec);
 
-		~knob.value("SB2", Color.green, { |val| ~sub.setAt(0, val); }, ~modSpec, 1/20);
-		~knob.value("SB9", Color.green, { |val| ~sub.setAt(1, val); }, ~modSpec, 1/20);
-		~knob.value("SB5", Color.green, { |val| ~sub.setAt(2, val); }, ~modSpec, 1/20);
-		~knob.value("SB17", Color.green, { |val| ~sub.setAt(3, val); }, ~modSpec, 1/20);
+		~knob.value("SB2", Color.green, ~modSpec);
+		~knob.value("SB9", Color.green, ~modSpec);
+		~knob.value("SB5", Color.green, ~modSpec);
+		~knob.value("SB17", Color.green, ~modSpec);
 
 		//row 3 and 4
 		~noteKnobs.value;
@@ -258,47 +257,45 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1, n = 0| //last for variants
-			var out = ~outFB.kr;
-			var hz = ~hz.kr * mul;
-			var rl = ~tmpo.kr / 20;
-			var stip = out * (~ring.kr).lag;// <5
-			var filt = ((hz * ~lpf.kr).lag * (1 + stip));//Pop elimination
-			var pm = ~buzz.kr * out;
+		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1, fb = 0| //last for variants and FB busID
+			var iBus = ~midiCC[0];//Get the instrument bus
 
-			//AM is done via stipling of filter
-			//Also maintains DC
-			//var am = 1 + (~ring.kr * out);
+			var out = fb.kr;
+			var hz = iBus.kr(1, 6) * mul;
+			var rl = iBus.kr(1, 2) / 20;
+			var stip = out * (iBus.kr(1, 5) / 50).lag;// <5
+			var filt = ((hz * iBus.kr(1, 8)).lag * (1 + stip));//Pop elimination
+			var pm = iBus.kr(1, 7) * out;
 
-			var env = EnvGen.kr(Env.perc(0.01, r * rl, l * rl), doneAction: 2);
+			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
 
-			var subz = SinOsc.ar( hz / 2, stip, ~sub.kr(1, 0)) +
-			SinOsc.ar( hz / 9, stip, ~sub.kr(1, 1)) + //The nine fix. Both pseudo and real Fermat in one.
-			SinOsc.ar( hz / 5, stip, ~sub.kr(1, 2)) +
-			SinOsc.ar( hz / 17, stip, ~sub.kr(1, 3));
+			var subz = SinOsc.ar( hz / 2, stip, iBus.kr(1, 12) / 50) +
+			SinOsc.ar( hz / 9, stip, iBus.kr(1, 13) / 50) + //The nine fix. Both pseudo and real Fermat in one.
+			SinOsc.ar( hz / 5, stip, iBus.kr(1, 14) / 50) +
+			SinOsc.ar( hz / 17, stip, iBus.kr(1, 15) / 50);
 
 			var osc = SinOsc.ar(hz, pm + subz, env);
 			var lpf = LPF.ar(osc, filt);
 
-			var q = (((osc - lpf) * lpf * ~sub.kr(1, 6)) + lpf).clip(-1.0, 1.0);//hard
+			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 5) + lpf).clip(-1.0, 1.0);//hard
 			//A nicked cubic clip with end differential matching.
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
-			var ac = (link * ~sub.kr(1, 5)) + (plate * (1 - ~sub.kr(1, 5)));
-			var order = HPF.ar(ac, (~sub.kr(1, 4).lag + 0.05) * filt);//DC removal and low cut
+			var ac = (link * iBus.kr(1, 9)) + (plate * (1 - iBus.kr(1, 9)));
+			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt);//DC removal and low cut
 
-			Out.kr(~outFB, order);//Synthesis complete
+			Out.kr(fb, order);//Synthesis complete
 
 			//Render out
-			OffsetOut.ar(~outBusBase, (order * ~vol.kr)!2);//output audio
+			OffsetOut.ar(~outBusBase, (order * iBus.kr(1, 4))!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
 			note: [r: 10],
 			accent: [r: 10, l: 2],
 			long: [r: 20],
-			blip: [r: 1])
+			blip: [r: 3])
 		).add;
 	);
 
