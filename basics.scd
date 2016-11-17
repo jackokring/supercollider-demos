@@ -342,7 +342,8 @@ s.doWhenBooted({
 						bus.set(val);
 						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
 						AppClock.play({
-							~midiCCShow[chan][ctl % 32].value = val; nil;
+							~midiCCShow[chan][ctl % 32].value = val;
+							~midiCCShow[chan][ctl % 32].doAction;
 						});
 					});
 				}
@@ -354,7 +355,8 @@ s.doWhenBooted({
 						bus.set(val);
 						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
 						AppClock.play({
-							~midiCCShow[chan][ctl % 32].value = val; nil;
+							~midiCCShow[chan][ctl % 32].value = val;
+							~midiCCShow[chan][ctl % 32].doAction;
 						});
 					});
 				}
