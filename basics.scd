@@ -29,6 +29,8 @@ s.boot;
 // CC SPEC
 //=========
 ~midiCCSpec = Array.fill(16, Array.fill(32, ControlSpec()));//32 controllers and 16 channels
+~midiCCShow = Array.fill(16, Array.fill(32, nil));//32 controllers and 16 channels
+~midiCCInt = Array.fill(16, Array.fill(32, false));//32 controllers and 16 channels
 
 //=============================
 //MASTER CLOCK AND WIN COUNTER
@@ -73,6 +75,7 @@ s.boot;
 	var chan = ~ctlCnt.div(32);
 	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
+	~midiCCShow[chan][ctl] = ref;
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 	};
@@ -88,6 +91,8 @@ s.boot;
 	var chan = ~ctlCnt.div(32);
 	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
+	~midiCCShow[chan][ctl] = ref;
+	~midiCCInt[chan][ctl] = true;
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 		//~midiCC[chan].get.postln;
@@ -138,7 +143,7 @@ s.doWhenBooted({
 	(
 		//FB VIA A BUS
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Array.fill(8, { Bus.control(s); });//the output (pre volume)
+		~outFB = Bus.control(s);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
 
 		// Make default window
@@ -150,9 +155,7 @@ s.doWhenBooted({
 			~midiCC.do { |i|
 				i.free;//free bus allocation IDs
 			};
-			~outFB.do { |i|
-				i.free;//free bus allocation IDs
-			};
+			~outFB.free;
 		});
 		~win.alwaysOnTop = true;
 		~resid = 0.0;
@@ -164,7 +167,7 @@ s.doWhenBooted({
 				//N.B. ==========================================
 				// WARNING: There is a one beat scheduling delay
 				//===============================================
-				Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16], fb: ~noteIdx ]);
+				Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16] ]);
 				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 				//I think this is to do with the tick already having passed at the schedule, and jitter effect
 				//cancellation.
@@ -230,13 +233,12 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, { arg key = 0, r = 1, l = 1, fb;//last for variants and FB busID
+		SynthDef(\hi, { arg key = 0, r = 1, l = 1;//last for variants
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var note = iBus.kr(1, 6) + 69 + key;//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
-			var oBus = InBus.kr(~outFB, 1, fb);//Get feedback bus
-			var out = oBus.kr;
+			var out = ~outFB.kr;//Get feedback bus
 
 			var rl = iBus.kr(1, 2) / 120;
 			var stip = out * (iBus.kr(1, 5) / 200).lag;// <5
@@ -261,7 +263,7 @@ s.doWhenBooted({
 			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt);//DC removal and low cut
 
-			Out.kr(oBus, order);//Synthesis complete
+			Out.kr(~outFB, order);//Synthesis complete
 
 			//Render out
 			OffsetOut.ar(~outBusBase, (order * (iBus.kr(1, 4).dbamp))!2);//output audio
@@ -338,6 +340,10 @@ s.doWhenBooted({
 						val = (val % 128) + (128 * val);
 						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
+						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
+						AppClock.play({
+							~midiCCShow[chan][ctl % 32].value = val; nil;
+						});
 					});
 				}
 				{ ctl < 64 } {//LSB
@@ -346,6 +352,10 @@ s.doWhenBooted({
 						val = val.div(128) * 128 + val;
 						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
+						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
+						AppClock.play({
+							~midiCCShow[chan][ctl % 32].value = val; nil;
+						});
 					});
 				}
 				{ true } { ("CC:" ++ ctl ++ " ON: " ++ (chan + 1)).postln; };//Debug
