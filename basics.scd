@@ -29,8 +29,6 @@ s.boot;
 // CC SPEC
 //=========
 ~midiCCSpec = Array.fill(16, Array.fill(32, ControlSpec()));//32 controllers and 16 channels
-~midiCCShow = Array.fill(16, Array.fill(32, nil));//32 controllers and 16 channels
-~midiCCInt = Array.fill(16, Array.fill(32, false));//32 controllers and 16 channels
 
 //=============================
 //MASTER CLOCK AND WIN COUNTER
@@ -75,7 +73,6 @@ s.boot;
 	var chan = ~ctlCnt.div(32);
 	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
-	~midiCCShow[chan][ctl] = ref;
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 	};
@@ -91,8 +88,6 @@ s.boot;
 	var chan = ~ctlCnt.div(32);
 	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
-	~midiCCShow[chan][ctl] = ref;
-	~midiCCInt[chan][ctl] = true;
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 		//~midiCC[chan].get.postln;
@@ -240,7 +235,7 @@ s.doWhenBooted({
 
 			var out = ~outFB.kr;//Get feedback bus
 
-			var rl = iBus.kr(1, 2) / 120;
+			var rl = 1 / iBus.kr(1, 2) * 400;
 			var stip = out * (iBus.kr(1, 5) / 200).lag;// <5
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip));//Pop elimination
 			var pm = iBus.kr(1, 7) / 100 * out;
@@ -320,6 +315,9 @@ s.doWhenBooted({
 	// MIDI Handler
 	//==============
 
+	// THERE WILL BE NO MIDI OUT
+	//---------------------------
+
 	//drums on 10?
 	(
 		//In pairs for 14 bit resolution?
@@ -340,11 +338,6 @@ s.doWhenBooted({
 						val = (val % 128) + (128 * val);
 						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
-						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
-						AppClock.play({
-							~midiCCShow[chan][ctl % 32].value = val;
-							~midiCCShow[chan][ctl % 32].doAction;
-						});
 					});
 				}
 				{ ctl < 64 } {//LSB
@@ -353,11 +346,6 @@ s.doWhenBooted({
 						val = val.div(128) * 128 + val;
 						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
-						if(~midiCCInt[chan][ctl % 32] == true) { val = val.floor; };
-						AppClock.play({
-							~midiCCShow[chan][ctl % 32].value = val;
-							~midiCCShow[chan][ctl % 32].doAction;
-						});
 					});
 				}
 				{ true } { ("CC:" ++ ctl ++ " ON: " ++ (chan + 1)).postln; };//Debug
