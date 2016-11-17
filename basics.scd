@@ -104,23 +104,31 @@ s.boot;
 	var ctl = ~ctlCnt % 16;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
-		~midiCC[chan][ctl].set(ref.value);//Set bus
+		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 	};
 	ref.setColors(knobColors: [ color, Color.black, Color.white, Color.black ]);
 	ref.doAction;//eval once
+	~ctlCnt = ~ctlCnt + 1;
 	ref;
 };
 
 ~butt = { arg state = "is?", colors = [ Color.white ], actions = [{ }];
 	var ref = Button(~win, 50@90);
+	var spec = ControlSpec(0, actions.size - 1, \lin, 1, 0);
+	var chan = ~ctlCnt.div(16);
+	var ctl = ~ctlCnt % 16;
+	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
+		var val = ~midiCCSpec[chan][ctl].unmap(ref.value) * 16383;//Calculate ranged full
+		~midiCC[chan].subBus(ctl).set(val);//Set bus
 		actions.at(ref.value % actions.size).value(ref.value);
 	};
-	ref.font = ~fontTmp;
+	ref.font = ~fontOff;
 	ref.states = colors.collect({ arg it, i;
 		[ state, Color.black, colors.at(i) ];
 	});
 	ref.doAction;//eval once
+	~ctlCnt = ~ctlCnt + 1;
 	ref;
 };
 
@@ -130,11 +138,7 @@ s.boot;
 		num.asDigit,
 		[
 			Color.grey, Color.red, Color.yellow, Color.green, Color.blue
-		], [{ arg butt;
-			~envSel.put(num, butt.value);
-			//butt.value.postln; //debug -- language does not support variable references to future closures
-			//~noteMul.postln; //ok!
-	}]);
+		], [{ }]);
 	~fonty.put(num, butt);
 };
 
@@ -187,8 +191,8 @@ s.doWhenBooted({
 				//N.B. ==========================================
 				// WARNING: There is a one beat scheduling delay
 				//===============================================
-				//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
-				Synth(~envArr.at(~envSel.at(~noteIdx)), [ \key, iBus[~noteIdx], \n, ~outFB.subBus(~noteIdx) ]);
+				var env = ~midiCCSpec[0][~noteIdx + 24].map(iBus[~noteIdx + 24]);//Map to envelope
+				Synth(~envArr.at(env), [ \key, iBus[~noteIdx + 16], \n, ~outFB.subBus(~noteIdx) ]);
 				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 				//I think this is to do with the tick already having passed at the schedule, and jitter effect
 				//cancellation.
