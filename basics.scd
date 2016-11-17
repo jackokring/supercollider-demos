@@ -13,7 +13,6 @@
 //=========================
 // START AND TEMPLATE CTRL
 //=========================
-(
 s = Server.default;
 s.boot;
 
@@ -71,8 +70,8 @@ s.boot;
 
 ~knob = { arg label = "is?", color, spec;
 	var ref = EZKnob(~win, label: label, controlSpec: spec);
-	var chan = ~ctlCnt.div(16);
-	var ctl = ~ctlCnt % 16;
+	var chan = ~ctlCnt.div(32);
+	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
@@ -86,11 +85,12 @@ s.boot;
 ~butt = { arg state = "is?", colors = [ Color.white ], actions = [{ }];
 	var ref = Button(~win, 50@90);
 	var spec = ControlSpec(0, actions.size - 1, \lin, 1, 0);
-	var chan = ~ctlCnt.div(16);
-	var ctl = ~ctlCnt % 16;
+	var chan = ~ctlCnt.div(32);
+	var ctl = ~ctlCnt % 32;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
 		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
+		//~midiCC[chan].get.postln;
 		actions.at(ref.value % actions.size).value(ref.value);
 	};
 	ref.font = ~fontOff;
@@ -103,16 +103,16 @@ s.boot;
 };
 
 //Private utility used below
-~noteButt = {
+~noteButt = { arg i;
 	var butt = ~butt.value(
-		num.asDigit,
+		i.asDigit,
 		[ Color.grey, Color.red, Color.yellow, Color.green, Color.blue ]);
 	butt;
 };
 
 ~noteButts = {
 	8.do { arg i;
-		~fonty[~rowCnt][i] = ~noteButt.value;//make 8 note keys
+		~fonty[~rowCnt][i] = ~noteButt.value(i);//make 8 note keys
 	};
 	~rowCnt = ~rowCnt + 1;
 };
@@ -124,7 +124,6 @@ s.boot;
 		~knob.value("@" ++ i.asDigit, Color.blue, ~noteSpec);
 	};
 };
-);
 
 //======================
 // CONSTRUCT GLOBAL GUI
@@ -137,29 +136,35 @@ s.doWhenBooted({
 	// SYNTH GUI Hi
 	//==============
 	(
+		//FB VIA A BUS
+		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
+		~outFB = Array.fill(8, { Bus.control(s); });//the output (pre volume)
+		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
+
 		// Make default window
 		~cont.value("Global Hi (MIDI ch 1)",  {
 			~sync.clear;
 			s.quit;
 			Window.closeAll;
 			MIDIClient.disposeClient;
+			~midiCC.do { |i|
+				i.free;//free bus allocation IDs
+			};
+			~outFB.do { |i|
+				i.free;//free bus allocation IDs
+			};
 		});
 		~win.alwaysOnTop = true;
 		~resid = 0.0;
 
-		//FB VIA A CONTROL BUS
-		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Bus.control(s, 8);//the output (pre volume)
-		//Always pass only necessary busses into Synth, as the SynthDef CAN'T east Out index a subBus!!!
-
 		~tick = { arg beats, time, clock;
-			~midiCC[0].get({ |iBus|
-				clock.tempo = iBus[2] / 60;//master tempo
+			~midiCC[0].get({ arg iBus;
+				~sync.tempo = iBus[2] / 60;//master tempo
+				//~sync.tempo.postln;
 				//N.B. ==========================================
 				// WARNING: There is a one beat scheduling delay
 				//===============================================
-				var env = iBus[~noteIdx + 24].floor;//Map to envelope
-				Synth(~envArr[env], [ \key, iBus[~noteIdx + 16], \fb, ~outFB.subBus(~noteIdx) ]);
+				Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16], fb: ~noteIdx ]);
 				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 				//I think this is to do with the tick already having passed at the schedule, and jitter effect
 				//cancellation.
@@ -171,8 +176,9 @@ s.doWhenBooted({
 				});
 				~noteIdx = (~noteIdx + 1) % 8;
 				~resid = ((iBus[3] / 500).bilinrand - ~resid) * 0.95;
-				1 + ~resid;//with retrig
+				//~resid.postln;
 			});
+			1 + ~resid;//with retrig -- here!!
 		};
 
 		//row 1
@@ -224,17 +230,18 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, {|key = 0, r = 1, l = 1, fb| //last for variants and FB busID
+		SynthDef(\hi, { arg key = 0, r = 1, l = 1, fb;//last for variants and FB busID
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var note = iBus.kr(1, 6) + 69 + key;//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
-			var out = fb.kr;
+			var oBus = InBus.kr(~outFB, 1, fb);//Get feedback bus
+			var out = oBus.kr;
 
-			var rl = iBus.kr(1, 2) / 20;
-			var stip = out * (iBus.kr(1, 5) / 100).lag;// <5
+			var rl = iBus.kr(1, 2) / 120;
+			var stip = out * (iBus.kr(1, 5) / 200).lag;// <5
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip));//Pop elimination
-			var pm = iBus.kr(1, 7) * out;
+			var pm = iBus.kr(1, 7) / 100 * out;
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
 
@@ -251,20 +258,20 @@ s.doWhenBooted({
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
-			var ac = (link * iBus.kr(1, 9)) + (plate * (1 - iBus.kr(1, 9)));
+			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt);//DC removal and low cut
 
-			Out.kr(fb, order);//Synthesis complete
+			Out.kr(oBus, order);//Synthesis complete
 
 			//Render out
 			OffsetOut.ar(~outBusBase, (order * (iBus.kr(1, 4).dbamp))!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
-			note: [r: 10],
-			accent: [r: 10, l: 2],
-			long: [r: 20],
-			blip: [r: 3])
+			note: [r: 1],
+			accent: [r: 1, l: 2],
+			long: [r: 3],
+			blip: [r: 0.3])
 		).add;
 	);
 
@@ -326,7 +333,7 @@ s.doWhenBooted({
 				var spec = ~midiCCSpec[chan][ctl % 32];
 				case
 				{ ctl < 32 } {//MSB
-					bus.get( { |val|
+					bus.get( { arg val;
 						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
 						val = (val % 128) + (128 * val);
 						val = spec.map(val / 16383);//back to 0 to 1
@@ -334,7 +341,7 @@ s.doWhenBooted({
 					});
 				}
 				{ ctl < 64 } {//LSB
-					bus.get( { |val|
+					bus.get( { arg val;
 						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
 						val = val.div(128) * 128 + val;
 						val = spec.map(val / 16383);//back to 0 to 1
@@ -438,5 +445,3 @@ s.doWhenBooted({
 	MIDIIn.connectAll;
 });
 );
-
-
