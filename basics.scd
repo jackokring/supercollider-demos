@@ -4,7 +4,7 @@
 //Notes for the brave.
 //--------------------
 //I have not created any classes, as this requires Quarks and installing into the compiled class base.
-//I have used functions as classes, and provided some common control constructors. Some are NOT reentrant.
+//I have used functions as classes, and provided some common control constructors.
 //Happy coding!
 
 ~outBusBase = 0;
@@ -20,46 +20,16 @@ s.boot;
 //=======================
 // MAIN MIDI CONTROL BUS
 //=======================
-~midiCC = [
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32),
-	Bus.control(s, 32)
-];//32 controllers and 16 channels
+//All buses are spec range buses based on spec mappings belew.
+//
+~midiCC = Array.fill(16, {
+	Bus.control(s, 32);
+});//32 controllers and 16 channels
 
 //=========
 // CC SPEC
 //=========
-~midiCCSpec = [
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-	[ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]
-];//32 controllers and 16 channels
+~midiCCSpec = Array.fill(16, Array.fill(32, ControlSpec()));//32 controllers and 16 channels
 
 //=============================
 //MASTER CLOCK AND WIN COUNTER
@@ -68,10 +38,11 @@ s.boot;
 ~win = nil;
 ~winCnt = 0;
 ~ctlCnt = 0;
+~rowCnt = 0;
 
 ~noteIdx = 0;
-~fonty = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ];
-~envSel = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
+~fonty = Array.fill(16, Array.fill(8, 0));//Allows for upto 16 rows of note buttons, avaraging 1 row per instrument
+
 ~envArr = [
 	'hi.null',
 	'hi.note',
@@ -119,8 +90,7 @@ s.boot;
 	var ctl = ~ctlCnt % 16;
 	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
 	ref.action = {
-		var val = ~midiCCSpec[chan][ctl].unmap(ref.value) * 16383;//Calculate ranged full
-		~midiCC[chan].subBus(ctl).set(val);//Set bus
+		~midiCC[chan].subBus(ctl).set(ref.value);//Set bus
 		actions.at(ref.value % actions.size).value(ref.value);
 	};
 	ref.font = ~fontOff;
@@ -132,26 +102,23 @@ s.boot;
 	ref;
 };
 
-//Not reentrant
-~noteButt = { arg num = 0;
+//Private utility used below
+~noteButt = {
 	var butt = ~butt.value(
 		num.asDigit,
-		[
-			Color.grey, Color.red, Color.yellow, Color.green, Color.blue
-		], [{ }]);
-	~fonty.put(num, butt);
+		[ Color.grey, Color.red, Color.yellow, Color.green, Color.blue ]);
+	butt;
 };
 
-//Not reentrant
-~noteArr = {
+~noteButts = {
 	8.do { arg i;
-		~noteButt.value(i);//make 8 note keys
+		~fonty[~rowCnt][i] = ~noteButt.value;//make 8 note keys
 	};
+	~rowCnt = ~rowCnt + 1;
 };
 
 ~noteSpec = ControlSpec(-24, 24, \lin, 1, 0);
 
-//Not reentrant
 ~noteKnobs = {
 	8.do { arg i;
 		~knob.value("@" ++ i.asDigit, Color.blue, ~noteSpec);
@@ -191,16 +158,16 @@ s.doWhenBooted({
 				//N.B. ==========================================
 				// WARNING: There is a one beat scheduling delay
 				//===============================================
-				var env = ~midiCCSpec[0][~noteIdx + 24].map(iBus[~noteIdx + 24]);//Map to envelope
-				Synth(~envArr.at(env), [ \key, iBus[~noteIdx + 16], \n, ~outFB.subBus(~noteIdx) ]);
+				var env = iBus[~noteIdx + 24].floor;//Map to envelope
+				Synth(~envArr[env], [ \key, iBus[~noteIdx + 16], \fb, ~outFB.subBus(~noteIdx) ]);
 				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 				//I think this is to do with the tick already having passed at the schedule, and jitter effect
 				//cancellation.
 				AppClock.play({
-					~fonty.at((~noteIdx + 6) % 8).font = ~fontOff;//Hence previous but one "offed"
+					~fonty[0][(~noteIdx + 6) % 8].font = ~fontOff;//Hence previous but one "offed"
 				});
 				AppClock.play({
-					~fonty.at((~noteIdx + 7) % 8).font = ~fontOn;//Hence previous note "displayed"
+					~fonty[0][(~noteIdx + 7) % 8].font = ~fontOn;//Hence previous note "displayed"
 				});
 				~noteIdx = (~noteIdx + 1) % 8;
 				~resid = ((iBus[3] / 500).bilinrand - ~resid) * 0.95;
@@ -211,7 +178,7 @@ s.doWhenBooted({
 		//row 1
 		~butt.value("RUN", [ Color.red, Color.green ], [
 			{ ~sync.clear; },
-			{ ~fonty.at((~noteIdx + 7) % 8).font = ~fontTmp; ~noteIdx = 0; ~sync.play(~tick); }
+			{ ~fonty[0][(~noteIdx + 7) % 8].font = ~fontOff; ~noteIdx = 0; ~sync.play(~tick); }
 		]);
 		~butt.value("MUTE", [ Color.green, Color.red ], [
 			{ s.unmute; },
@@ -248,7 +215,7 @@ s.doWhenBooted({
 		//row 3 and 4
 		~noteKnobs.value;
 
-		~noteArr.value;
+		~noteButts.value;
 
 		//N.B.==================================
 		// WARNING: Any parameter to a SynthDef
@@ -257,7 +224,7 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, {|key = 0, r = 1, l = 1, fb = 0| //last for variants and FB busID
+		SynthDef(\hi, {|key = 0, r = 1, l = 1, fb| //last for variants and FB busID
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var note = iBus.kr(1, 6) + 69 + key;//Base midi note
 			var hz = note.midicps;//Base with note multiplier
@@ -309,24 +276,25 @@ s.doWhenBooted({
 		//row 1 - Basic LFO application
 		~cont.value("Captain HiHo (MIDI ch 2)");
 		MIDIClient.init;
-		MIDIIn.connectAll;
-		~midiSrc = nil;
+		~midiSrc = {
+			MIDIClient.sources[~midiCC[1].subBus(0).floor].asMIDIInPortUID;
+		};
 
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
-		~knob.value("MIDI In", Color.red, { |val| ~midiSrc = MIDIClient.sources[val].asMIDIInPortUID; }, ~midiSpec);
+		~knob.value("MIDI In", Color.red, ~midiSpec);
 
 		~ratioSpec = ControlSpec(1, 8, \lin, 1 / 8, 1);
-		~knob.value("Quick", Color.yellow, { }, ~ratioSpec);
-		~knob.value("Slow", Color.yellow, { }, ~ratioSpec);
+		~knob.value("Quick", Color.yellow, ~ratioSpec);
+		~knob.value("Slow", Color.yellow, ~ratioSpec);
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
-		~knob.value("VolMod", Color.green, { }, ~polSpec, 1/100);
-		~knob.value("StipMod", Color.green, { }, ~polSpec, 1/100);
-		~knob.value("TuneMod", Color.red, { }, ~polSpec, 1/100);
-		~knob.value("BuzzMod", Color.green, { }, ~polSpec, 1/100);
+		~knob.value("VolMod", Color.green, ~polSpec);
+		~knob.value("StipMod", Color.green, ~polSpec);
+		~knob.value("TuneMod", Color.red, ~polSpec);
+		~knob.value("BuzzMod", Color.green, ~polSpec);
 
 		~a128Spec = ControlSpec(1, 128, \lin, 1, 1);
-		~knob.value("Sync", Color.red, { }, ~a128Spec);
+		~knob.value("Sync", Color.red, ~a128Spec);
 
 		//row 2 - Program (control timbrals of Hi)
 
@@ -352,7 +320,7 @@ s.doWhenBooted({
 		//LSB @ (controller + 32)
 		MIDIFunc.cc({
 			arg val, ctl, chan, uid;
-			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
+			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
 				//BUS IS ASYNC SO CALLBACK SET
 				var bus = ~midiCC[chan].subBus(ctl % 32);
 				var spec = ~midiCCSpec[chan][ctl % 32];
@@ -361,7 +329,7 @@ s.doWhenBooted({
 					bus.get( { |val|
 						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
 						val = (val % 128) + (128 * val);
-						val = spec.map(val) / 16383;//back to 0 to 1
+						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
 					});
 				}
@@ -369,7 +337,7 @@ s.doWhenBooted({
 					bus.get( { |val|
 						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
 						val = val.div(128) * 128 + val;
-						val = spec.map(val) / 16383;//back to 0 to 1
+						val = spec.map(val / 16383);//back to 0 to 1
 						bus.set(val);
 					});
 				}
@@ -467,6 +435,7 @@ s.doWhenBooted({
 	//======
 	// EXIT
 	//======
+	MIDIIn.connectAll;
 });
 );
 
