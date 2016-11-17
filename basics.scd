@@ -68,12 +68,10 @@ s.boot;
 ~win = nil;
 ~winCnt = 0;
 ~ctlCnt = 0;
+
 ~noteIdx = 0;
 ~fonty = [ 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 ];
-
-~noteMul = [ 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 ];
 ~envSel = [ 0, 0, 0, 0, 0, 0, 0, 0 ];
-
 ~envArr = [
 	'hi.null',
 	'hi.note',
@@ -82,11 +80,8 @@ s.boot;
 	'hi.blip'
 ];
 
-~notes = (([ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 ] + 69).midicps) / 440;//an octave
-~notes = (~notes / 4) ++ (~notes / 2) ++ (~notes) ++ (~notes * 2) ++ [ 4 ];//full dial range
-
-~fontDef = Font(Font.default.name, 30);//note on!!
-~fontTmp = Font(Font.default.name, 15);//regular size
+~fontOn = Font(Font.default.name, 30);//note on!!
+~fontOff = Font(Font.default.name, 15);//regular size
 
 //====================
 // A WINDOW CONTAINER
@@ -129,8 +124,7 @@ s.boot;
 	ref;
 };
 
-//Below are not reentrant
-
+//Not reentrant
 ~noteButt = { arg num = 0;
 	var butt = ~butt.value(
 		num.asDigit,
@@ -144,6 +138,7 @@ s.boot;
 	~fonty.put(num, butt);
 };
 
+//Not reentrant
 ~noteArr = {
 	8.do { arg i;
 		~noteButt.value(i);//make 8 note keys
@@ -152,9 +147,10 @@ s.boot;
 
 ~noteSpec = ControlSpec(-24, 24, \lin, 1, 0);
 
+//Not reentrant
 ~noteKnobs = {
 	8.do { arg i;
-		~knob.value("@" ++ i.asDigit, Color.blue, { |note| ~noteMul.put(i, ~notes.at(note + 24)); }, ~noteSpec);
+		~knob.value("@" ++ i.asDigit, Color.blue, ~noteSpec);
 	};
 };
 );
@@ -178,7 +174,6 @@ s.doWhenBooted({
 			MIDIClient.disposeClient;
 		});
 		~win.alwaysOnTop = true;
-		~jig = 0.0;
 		~resid = 0.0;
 
 		//FB VIA A CONTROL BUS
@@ -186,25 +181,27 @@ s.doWhenBooted({
 		~outFB = Bus.control(s, 8);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T east Out index a subBus!!!
 
-		~tick = {arg beats, time, clock;
-			clock.tempo = ~midiCC[0][2] / 60;//master tempo
-			//N.B. ==========================================
-			// WARNING: There is a one beat scheduling delay
-			//===============================================
-			//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
-			Synth(~envArr.at(~envSel.at(~noteIdx)), [ \mul, ~noteMul.at(~noteIdx), \n, ~outFB.subBus(~noteIdx) ]);
-			//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
-			//I think this is to do with the tick already having passed at the schedule, and jitter effect
-			//cancellation.
-			AppClock.play({
-				~fonty.at((~noteIdx + 6) % 8).font = ~fontTmp;//Hence previous but one "offed"
+		~tick = { arg beats, time, clock;
+			~midiCC[0].get({ |iBus|
+				clock.tempo = iBus[2] / 60;//master tempo
+				//N.B. ==========================================
+				// WARNING: There is a one beat scheduling delay
+				//===============================================
+				//~envSel.at(~noteIdx).postln;//debug -- notes on parameters becoming control UGens
+				Synth(~envArr.at(~envSel.at(~noteIdx)), [ \key, iBus[~noteIdx], \n, ~outFB.subBus(~noteIdx) ]);
+				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
+				//I think this is to do with the tick already having passed at the schedule, and jitter effect
+				//cancellation.
+				AppClock.play({
+					~fonty.at((~noteIdx + 6) % 8).font = ~fontOff;//Hence previous but one "offed"
+				});
+				AppClock.play({
+					~fonty.at((~noteIdx + 7) % 8).font = ~fontOn;//Hence previous note "displayed"
+				});
+				~noteIdx = (~noteIdx + 1) % 8;
+				~resid = ((iBus[3] / 500).bilinrand - ~resid) * 0.95;
+				1 + ~resid;//with retrig
 			});
-			AppClock.play({
-				~fonty.at((~noteIdx + 7) % 8).font = ~fontDef;//Hence previous note "displayed"
-			});
-			~noteIdx = (~noteIdx + 1) % 8;
-			~resid = ((~midiCC[0][3] / 500).bilinrand - ~resid) * 0.95;
-			1 + ~resid;//with retrig
 		};
 
 		//row 1
@@ -224,18 +221,17 @@ s.doWhenBooted({
 		~knob.value("Tempo", Color.red, ~bpmSpec);
 		~knob.value("Jiggle", Color.yellow, ~modSpec);
 
-		~knob.value("Volume", Color.yellow, { |val| val = 10.0 ** (val / 20.0);	~vol.set(val); }, ~volSpec);
+		~knob.value("Volume", Color.yellow, ~volSpec);
 		~knob.value("Stiple", Color.green, ~modSpec);
 
-		~knob.value("Tune", Color.red, { |val| ~hz.set(440 * (2 ** (val / 12))); }, ~noteSpec);
+		~knob.value("Tune", Color.red, ~noteSpec);
 		~knob.value("Buzz", Color.green, ~modSpec);
 
 		//Row 2
 
 		//one octave up filter
 		~filterSpec = ControlSpec(-12, 36, \lin, 0, 12);
-		~knob.value("Filter", Color.yellow, { |val| ~lpf.set(2 ** (val / 12)); }, ~filterSpec);
-
+		~knob.value("Filter", Color.yellow, ~filterSpec);
 		~knob.value("Order", Color.yellow, ~modSpec);
 		~knob.value("Plate", Color.yellow, ~modSpec);
 		~knob.value("Thin", Color.yellow, ~modSpec);
@@ -257,14 +253,16 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, {|mul = 1.0, r = 1, l = 1, fb = 0| //last for variants and FB busID
+		SynthDef(\hi, {|key = 0, r = 1, l = 1, fb = 0| //last for variants and FB busID
 			var iBus = ~midiCC[0];//Get the instrument bus
+			var note = iBus.kr(1, 6) + 69 + key;//Base midi note
+			var hz = note.midicps;//Base with note multiplier
 
 			var out = fb.kr;
-			var hz = iBus.kr(1, 6) * mul;
+
 			var rl = iBus.kr(1, 2) / 20;
-			var stip = out * (iBus.kr(1, 5) / 50).lag;// <5
-			var filt = ((hz * iBus.kr(1, 8)).lag * (1 + stip));//Pop elimination
+			var stip = out * (iBus.kr(1, 5) / 100).lag;// <5
+			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip));//Pop elimination
 			var pm = iBus.kr(1, 7) * out;
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
@@ -288,7 +286,7 @@ s.doWhenBooted({
 			Out.kr(fb, order);//Synthesis complete
 
 			//Render out
-			OffsetOut.ar(~outBusBase, (order * iBus.kr(1, 4))!2);//output audio
+			OffsetOut.ar(~outBusBase, (order * (iBus.kr(1, 4).dbamp))!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
