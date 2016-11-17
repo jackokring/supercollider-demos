@@ -147,7 +147,7 @@ s.doWhenBooted({
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
 
 		// Make default window
-		~cont.value("Global Hi (MIDI ch 1)",  {
+		~cont.value("General Hi (MIDI ch 1)",  {
 			~sync.clear;
 			s.quit;
 			Window.closeAll;
