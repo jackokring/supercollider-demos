@@ -163,30 +163,32 @@ s.doWhenBooted({
 
 		~tick = { arg beats, time, clock;
 			~midiCC[0].get({ arg iBus;
-				~sync.tempo = iBus[2] / 60;//master tempo
-				//~sync.tempo.postln;
-				//N.B. ==========================================
-				// WARNING: There is a one beat scheduling delay
-				//===============================================
-				Synth(\lfo);
-				Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16] ]);
-				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
-				//I think this is to do with the tick already having passed at the schedule, and jitter effect
-				//cancellation.
-				AppClock.play({
-					~fonty[0][(~noteIdx + 6) % 8].font = ~fontOff;//Hence previous but one "offed"
+				~midiCC[1].get({ arg jBus;
+					~sync.tempo = iBus[2] / 60;//master tempo
+					//~sync.tempo.postln;
+					//N.B. ==========================================
+					// WARNING: There is a one beat scheduling delay
+					//===============================================
+					Synth(\lfo);
+					Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16] + jBus[~stepIdx + 16] ]);
+					//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
+					//I think this is to do with the tick already having passed at the schedule, and jitter effect
+					//cancellation.
+					AppClock.play({
+						~fonty[0][(~noteIdx + 6) % 8].font = ~fontOff;//Hence previous but one "offed"
+					});
+					AppClock.play({
+						~fonty[0][(~noteIdx + 7) % 8].font = ~fontOn;//Hence previous note "displayed"
+						if(~noteIdx == 0) {
+							~fonty[1][~stepIdx].font = ~fontOn;
+							~fonty[1][(~stepIdx + 7) % 8].font = ~fontOff;
+						};
+					});
+					~noteIdx = (~noteIdx + 1) % 8;
+					if(~noteIdx == 0) { ~stepIdx = (~stepIdx + 1) % 8; };
+					~resid = ((iBus[3] / 5000).bilinrand - ~resid) * 0.95;
+					//~resid.postln;
 				});
-				AppClock.play({
-					~fonty[0][(~noteIdx + 7) % 8].font = ~fontOn;//Hence previous note "displayed"
-					if(~noteIdx == 0) {
-						~fonty[1][~stepIdx].font = ~fontOn;
-						~fonty[1][(~stepIdx + 7) % 8].font = ~fontOff;
-					};
-				});
-				~noteIdx = (~noteIdx + 1) % 8;
-				if(~noteIdx == 0) { ~stepIdx = (~stepIdx + 1) % 8; };
-				~resid = ((iBus[3] / 5000).bilinrand - ~resid) * 0.95;
-				//~resid.postln;
 			});
 			1 + ~resid;//with retrig -- here!!
 		};
