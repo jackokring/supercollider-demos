@@ -176,7 +176,7 @@ s.doWhenBooted({
 					~fonty[0][(~noteIdx + 7) % 8].font = ~fontOn;//Hence previous note "displayed"
 				});
 				~noteIdx = (~noteIdx + 1) % 8;
-				~resid = ((iBus[3] / 500).bilinrand - ~resid) * 0.95;
+				~resid = ((iBus[3] / 5000).bilinrand - ~resid) * 0.95;
 				//~resid.postln;
 			});
 			1 + ~resid;//with retrig -- here!!
@@ -241,7 +241,8 @@ s.doWhenBooted({
 			var out = ~outFB.kr;//Get feedback bus
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
-			var stip = out * (iBus.kr(1, 5) / 200).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared);// <5
+			var stip = out * (iBus.kr(1, 5) / 200).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
+			PinkNoise.ar * mBus.kr(1, 9) / 100;// <5
 			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
@@ -249,15 +250,20 @@ s.doWhenBooted({
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip)) * polEnv;//Pop elimination
 			var plEnv = (env * mBus.kr(1, 10) / 100) + 1;
 
-			var subz = SinOsc.ar( hz / 2, stip, iBus.kr(1, 12) / 50) +
-			SinOsc.ar( hz / 9, stip, iBus.kr(1, 13) / 50) + //The nine fix. Both pseudo and real Fermat in one.
-			SinOsc.ar( hz / 5, stip, iBus.kr(1, 14) / 50) +
-			SinOsc.ar( hz / 17, stip, iBus.kr(1, 15) / 50);
+			var sh2 = (env * mBus.kr(1, 12) / 100) + 1;
+			var sh9 = (env * mBus.kr(1, 13) / 100) + 1;
+			var sh5 = (env * mBus.kr(1, 14) / 100) + 1;
+			var sh17 = (env * mBus.kr(1, 15) / 100) + 1;
+
+			var subz = SinOsc.ar( hz / 2, stip, iBus.kr(1, 12) * sh2 / 50) +
+			SinOsc.ar( hz / 9, stip, iBus.kr(1, 13) * sh9 / 50) + //The nine fix. Both pseudo and real Fermat in one.
+			SinOsc.ar( hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
+			SinOsc.ar( hz / 17, stip, iBus.kr(1, 15) * sh17 / 50);
 
 			var osc = SinOsc.ar(hz, pm + subz, env);
 			var lpf = LPF.ar(osc, filt);
 
-			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 5 * plEnv) + lpf).clip(-1.0, 1.0);//hard
+			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 10 * plEnv) + lpf).clip(-1.0, 1.0);//hard
 			//A nicked cubic clip with end differential matching.
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
@@ -308,13 +314,13 @@ s.doWhenBooted({
 
 		//row 2 - Program (control timbrals of Hi)
 		~knob.value("FiltEnv", Color.yellow, ~polSpec);
-		~knob.value("StipMod", Color.green, ~modSpec);
+		~knob.value("Pink", Color.green, ~modSpec);
 		~knob.value("PlatEnv", Color.yellow, ~polSpec);
 		~knob.value("ThinEnv", Color.yellow, ~polSpec);
-		~knob.value("Mod2", Color.green, ~modSpec);
-		~knob.value("Mod9", Color.green, ~modSpec);
+		~knob.value("Mod2", Color.green, ~polSpec);
+		~knob.value("Mod9", Color.green, ~polSpec);
 		~knob.value("Mod5", Color.green, ~polSpec);
-		~knob.value("Mod17", Color.green, ~modSpec);
+		~knob.value("Mod17", Color.green, ~polSpec);
 
 		//row 3 - Song (control tonals of Hi)
 
