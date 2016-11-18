@@ -199,7 +199,7 @@ s.doWhenBooted({
 				~fonty[1][~stepIdx].font = ~fontOff;
 				~noteIdx = 0;
 				~stepIdx = 0;
-				~fonty[1][~stepIdx].font = ~fontOff;
+				~fonty[1][0].font = ~fontOn;
 				~sync.play(~tick); }
 		]);
 		~butt.value("MUTE", [ Color.green, Color.red ], [
