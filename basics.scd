@@ -468,28 +468,28 @@ s.doWhenBooted({
 		// MIDI 5 - 12
 		//=====================================
 
-		~contHolder("");//5
-		~contHolder("");//6
-		~contHolder("");//7
-		~contHolder("");//8
+		~contHolder.value("");//5
+		~contHolder.value("");//6
+		~contHolder.value("");//7
+		~contHolder.value("");//8
 
-		~contHolder("");//9
-		~contHolder("");//10
-		~contHolder("");//11
-		~contHolder("");//12
+		~contHolder.value("");//9 - Emergency ...
+		~contHolder.value("");//10 - Drums 2 ...
+		~contHolder.value("");//11 - The imagination machine ...
+		~contHolder.value("");//12 - Loose ends
 
 		//The following two machines do tempo synced control remapping
 		//===================================
 		// PITCH MOD AND AFTERTOUCH REMAPPER
 		//===================================
 
-		~contHolder("");//13
+		~contHolder.value("");//13
 
 		//============================
 		// NOTE AND VELOCITY REMAPPER
 		//============================
 
-		~contHolder("");//14
+		~contHolder.value("");//14
 
 		//==============
 		// MACHINES END
