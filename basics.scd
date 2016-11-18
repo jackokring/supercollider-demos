@@ -140,6 +140,7 @@ s.doWhenBooted({
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
 		~outFB = Bus.control(s);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
+		~outLFO = Bus.audio(s);
 
 		// Make default window
 		~cont.value("General Hi (MIDI ch 1)",  {
@@ -151,6 +152,7 @@ s.doWhenBooted({
 				i.free;//free bus allocation IDs
 			};
 			~outFB.free;
+			~outLFO.free;
 		});
 		~win.alwaysOnTop = true;
 		~resid = 0.0;
@@ -162,6 +164,7 @@ s.doWhenBooted({
 				//N.B. ==========================================
 				// WARNING: There is a one beat scheduling delay
 				//===============================================
+				Synth(\lfo);
 				Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16] ]);
 				//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 				//I think this is to do with the tick already having passed at the schedule, and jitter effect
@@ -230,15 +233,17 @@ s.doWhenBooted({
 
 		SynthDef(\hi, { arg key = 0, r = 1, l = 1;//last for variants
 			var iBus = ~midiCC[0];//Get the instrument bus
-			var note = iBus.kr(1, 6) + 69 + key;//Base midi note
+			var mBus = ~midiCC[1];//The modulation bus
+
+			var note = iBus.kr(1, 6) + 69 + key + (mBus.kr(1, 5) / 100 * 6 * ~outLFO.ar);//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
 			var out = ~outFB.kr;//Get feedback bus
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
-			var stip = out * (iBus.kr(1, 5) / 200).lag;// <5
+			var stip = out * (iBus.kr(1, 5) / 200).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared);// <5
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip));//Pop elimination
-			var pm = iBus.kr(1, 7) / 100 * out;
+			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
 
@@ -257,11 +262,12 @@ s.doWhenBooted({
 
 			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt);//DC removal and low cut
+			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar).squared);
 
-			Out.kr(~outFB, order);//Synthesis complete
+			Out.kr(~outFB, postLFO);//Synthesis complete
 
 			//Render out
-			OffsetOut.ar(~outBusBase, (order * (iBus.kr(1, 4).dbamp))!2);//output audio
+			OffsetOut.ar(~outBusBase, (postLFO * (iBus.kr(1, 4).dbamp))!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
@@ -270,12 +276,10 @@ s.doWhenBooted({
 			long: [r: 3],
 			blip: [r: 0.3])
 		).add;
-	);
 
-	//================
-	// SYNTH GUI HiHo
-	//================
-	(
+		//================
+		// SYNTH GUI HiHo
+		//================
 
 		//row 1 - Basic LFO application
 		~cont.value("Captain HiHo (MIDI ch 2)");
@@ -287,28 +291,40 @@ s.doWhenBooted({
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
 		~knob.value("MIDI In", Color.red, ~midiSpec);
 
-		~ratioSpec = ControlSpec(1, 8, \lin, 1 / 8, 1);
+		~ratioSpec = ControlSpec(1, 16, \lin, 1, 1);
 		~knob.value("Quick", Color.yellow, ~ratioSpec);
 		~knob.value("Slow", Color.yellow, ~ratioSpec);
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
-		~knob.value("VolMod", Color.green, ~polSpec);
-		~knob.value("StipMod", Color.green, ~polSpec);
+		~knob.value("VolMod", Color.green, ~modSpec);//Keeping bounds
+		~knob.value("StipMod", Color.green, ~modSpec);
 		~knob.value("TuneMod", Color.red, ~polSpec);
-		~knob.value("BuzzMod", Color.green, ~polSpec);
+		~knob.value("BuzzMod", Color.green, ~modSpec);
 
-		~a128Spec = ControlSpec(1, 128, \lin, 1, 1);
-		~knob.value("Sync", Color.red, ~a128Spec);
+		~knob.value("Length", Color.red, ~modSpec);
 
 		//row 2 - Program (control timbrals of Hi)
-
+		~knob.value("VolMod", Color.green, ~modSpec);
+		~knob.value("StipMod", Color.green, ~modSpec);
+		~knob.value("TuneMod", Color.red, ~polSpec);
+		~knob.value("BuzzMod", Color.green, ~modSpec);
+		~knob.value("VolMod", Color.green, ~modSpec);
+		~knob.value("StipMod", Color.green, ~modSpec);
+		~knob.value("TuneMod", Color.red, ~polSpec);
+		~knob.value("BuzzMod", Color.green, ~modSpec);
 
 		//row 3 - Song (control tonals of Hi)
 
 
 		//row 4 - Sequence (control temporals of Hi)
 
-
+		SynthDef(\lfo, {
+			var cBus = ~midiCC[0];
+			var lBus = ~midiCC[1];
+			var oneTick = 1 / (cBus.kr(1, 2) / 60);
+			var hz = oneTick * lBus.kr(1, 1) / lBus.kr(1, 2);//Rate adjusted LFO
+			OffsetOut.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
+		}).add;//DON'T FORGET TO ADD!!!!!!
 	);
 
 	//==============
