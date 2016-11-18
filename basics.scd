@@ -28,7 +28,7 @@ s.boot;
 //=========
 // CC SPEC
 //=========
-~midiCCSpec = Array.fill(16, Array.fill(32, ControlSpec()));//32 controllers and 16 channels
+~midiCCSpec = Array.fill(16, { Array.fill(32, { ControlSpec() }) });//32 controllers and 16 channels
 
 //=============================
 //MASTER CLOCK AND WIN COUNTER
@@ -40,7 +40,9 @@ s.boot;
 ~rowCnt = 0;
 
 ~noteIdx = 0;
-~fonty = Array.fill(16, Array.fill(8, 0));//Allows for upto 16 rows of note buttons, avaraging 1 row per instrument
+~stepIdx = 0;
+// BEWARE STATIC ITERATORS!! THEY BE CLONES ===
+~fonty = Array.fill(16, { Array.fill(8, { nil }) });//Allows for upto 16 rows of note buttons, avaraging 1 row per instrument
 
 ~envArr = [
 	'hi.null',
@@ -125,6 +127,8 @@ s.boot;
 	};
 };
 
+
+
 //======================
 // CONSTRUCT GLOBAL GUI
 //======================
@@ -174,8 +178,13 @@ s.doWhenBooted({
 				});
 				AppClock.play({
 					~fonty[0][(~noteIdx + 7) % 8].font = ~fontOn;//Hence previous note "displayed"
+					if(~noteIdx == 0) {
+						~fonty[1][~stepIdx].font = ~fontOn;
+						~fonty[1][(~stepIdx + 7) % 8].font = ~fontOff;
+					};
 				});
 				~noteIdx = (~noteIdx + 1) % 8;
+				if(~noteIdx == 0) { ~stepIdx = (~stepIdx + 1) % 8; };
 				~resid = ((iBus[3] / 5000).bilinrand - ~resid) * 0.95;
 				//~resid.postln;
 			});
@@ -185,7 +194,13 @@ s.doWhenBooted({
 		//row 1
 		~butt.value("RUN", [ Color.red, Color.green ], [
 			{ ~sync.clear; },
-			{ ~fonty[0][(~noteIdx + 7) % 8].font = ~fontOff; ~noteIdx = 0; ~sync.play(~tick); }
+			{
+				~fonty[0][(~noteIdx + 7) % 8].font = ~fontOff;
+				~fonty[1][~stepIdx].font = ~fontOff;
+				~noteIdx = 0;
+				~stepIdx = 0;
+				~fonty[1][~stepIdx].font = ~fontOff;
+				~sync.play(~tick); }
 		]);
 		~butt.value("MUTE", [ Color.green, Color.red ], [
 			{ s.unmute; },
@@ -323,9 +338,10 @@ s.doWhenBooted({
 		~knob.value("Mod17", Color.green, ~polSpec);
 
 		//row 3 - Song (control tonals of Hi)
-
+		~noteKnobs.value;
 
 		//row 4 - Sequence (control temporals of Hi)
+		~noteButts.value;
 
 		SynthDef(\lfo, {
 			var cBus = ~midiCC[0];
