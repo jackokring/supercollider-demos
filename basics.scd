@@ -353,6 +353,58 @@ s.doWhenBooted({
 			var hz = oneTick * lBus.kr(1, 2);//Rate adjusted LFO
 			OffsetOut.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
 		}).add;//DON'T FORGET TO ADD!!!!!!
+
+		//==================
+		// EFFECTS GUI Sift
+		//==================
+
+		//row 1 - Basic Controls
+		~cont.value("Sargent Sift (MIDI ch 3)");
+
+		~knob.value("Left", Color.yellow, ~modSpec);
+		~knob.value("LTone", Color.green, ~modSpec);
+		~knob.value("LRoute", Color.yellow, ~modSpec);
+
+		~knob.value("Right", Color.yellow, ~modSpec);
+		~knob.value("RTone", Color.green, ~modSpec);
+		~knob.value("RRoute", Color.yellow, ~modSpec);
+
+		~knob.value("SRoute", Color.yellow, ~modSpec);
+		~knob.value("Paths", Color.red, ~modSpec);
+
+		//row 2 - Effects 1 and 2
+		~knob.value("A", Color.cyan, ~polSpec);
+		~knob.value("B", Color.cyan, ~modSpec);
+		~knob.value("C", Color.cyan, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
+		~knob.value("A", Color.magenta, ~polSpec);
+		~knob.value("B", Color.magenta, ~polSpec);
+		~knob.value("C", Color.magenta, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
+		//row 3 - Effects 3 and 4
+		~knob.value("A", Color.white, ~polSpec);
+		~knob.value("B", Color.white, ~modSpec);
+		~knob.value("C", Color.white, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
+		~knob.value("A", Color.grey, ~polSpec);
+		~knob.value("B", Color.grey, ~polSpec);
+		~knob.value("C", Color.grey, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
+		//row 4 - Effects 5 and Stereo Controls
+		~knob.value("A", Color.blue, ~polSpec);
+		~knob.value("B", Color.blue, ~modSpec);
+		~knob.value("C", Color.blue, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
+		~knob.value("A", Color.red, ~polSpec);
+		~knob.value("B", Color.yellow, ~polSpec);
+		~knob.value("C", Color.green, ~polSpec);
+		~knob.value("Mix", Color.green, ~polSpec);
+
 	);
 
 	//==============
