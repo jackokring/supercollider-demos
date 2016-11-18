@@ -242,10 +242,12 @@ s.doWhenBooted({
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
 			var stip = out * (iBus.kr(1, 5) / 200).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared);// <5
-			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip));//Pop elimination
 			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
+			var polEnv = (env * mBus.kr(1, 8) / 100 * 12).midiratio.lag;
+			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip)) * polEnv;//Pop elimination
+			var plEnv = (env * mBus.kr(1, 10) / 100) + 1;
 
 			var subz = SinOsc.ar( hz / 2, stip, iBus.kr(1, 12) / 50) +
 			SinOsc.ar( hz / 9, stip, iBus.kr(1, 13) / 50) + //The nine fix. Both pseudo and real Fermat in one.
@@ -255,13 +257,14 @@ s.doWhenBooted({
 			var osc = SinOsc.ar(hz, pm + subz, env);
 			var lpf = LPF.ar(osc, filt);
 
-			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 5) + lpf).clip(-1.0, 1.0);//hard
+			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 5 * plEnv) + lpf).clip(-1.0, 1.0);//hard
 			//A nicked cubic clip with end differential matching.
 			var plate = q * (3 - q.squared) / 3;//softer
 			var link = LPF.ar(plate, filt);
 
 			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
-			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt);//DC removal and low cut
+			var thEnv = (env * mBus.kr(1, 11) / 100 * 12).midiratio;
+			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt * thEnv);//DC removal and low cut
 			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar).squared);
 
 			Out.kr(~outFB, postLFO);//Synthesis complete
@@ -296,7 +299,7 @@ s.doWhenBooted({
 		~knob.value("Slow", Color.yellow, ~ratioSpec);
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
-		~knob.value("VolMod", Color.green, ~modSpec);//Keeping bounds
+		~knob.value("VolMod", Color.yellow, ~modSpec);//Keeping bounds
 		~knob.value("StipMod", Color.green, ~modSpec);
 		~knob.value("TuneMod", Color.red, ~polSpec);
 		~knob.value("BuzzMod", Color.green, ~modSpec);
@@ -304,14 +307,14 @@ s.doWhenBooted({
 		~knob.value("Length", Color.red, ~modSpec);
 
 		//row 2 - Program (control timbrals of Hi)
-		~knob.value("VolMod", Color.green, ~modSpec);
+		~knob.value("FiltEnv", Color.yellow, ~polSpec);
 		~knob.value("StipMod", Color.green, ~modSpec);
-		~knob.value("TuneMod", Color.red, ~polSpec);
-		~knob.value("BuzzMod", Color.green, ~modSpec);
-		~knob.value("VolMod", Color.green, ~modSpec);
-		~knob.value("StipMod", Color.green, ~modSpec);
-		~knob.value("TuneMod", Color.red, ~polSpec);
-		~knob.value("BuzzMod", Color.green, ~modSpec);
+		~knob.value("PlatEnv", Color.yellow, ~polSpec);
+		~knob.value("ThinEnv", Color.yellow, ~polSpec);
+		~knob.value("Mod2", Color.green, ~modSpec);
+		~knob.value("Mod9", Color.green, ~modSpec);
+		~knob.value("Mod5", Color.green, ~polSpec);
+		~knob.value("Mod17", Color.green, ~modSpec);
 
 		//row 3 - Song (control tonals of Hi)
 
