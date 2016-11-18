@@ -164,7 +164,7 @@ s.doWhenBooted({
 		~tick = { arg beats, time, clock;
 			~midiCC[0].get({ arg iBus;
 				~midiCC[1].get({ arg jBus;
-					~sync.tempo = iBus[2] / 60;//master tempo
+					~sync.tempo = iBus[2] / 60 * jBus[1];//master tempo
 					//~sync.tempo.postln;
 					//N.B. ==========================================
 					// WARNING: There is a one beat scheduling delay
@@ -209,7 +209,7 @@ s.doWhenBooted({
 			{ s.mute; }
 		]);
 
-		~bpmSpec = ControlSpec(120, 360, \lin, 1, 240);
+		~bpmSpec = ControlSpec(30, 300, \lin, 1, 240);
 		~modSpec = ControlSpec(0, 100, \lin, 0, 0);
 		~volSpec = ControlSpec(-inf, 0, \db, 0, -12);
 
@@ -317,9 +317,10 @@ s.doWhenBooted({
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
 		~knob.value("MIDI In", Color.red, ~midiSpec);
 
-		~ratioSpec = ControlSpec(1, 16, \lin, 1, 1);
-		~knob.value("Quick", Color.yellow, ~ratioSpec);
-		~knob.value("Slow", Color.yellow, ~ratioSpec);
+		~ratioSpec = ControlSpec(1, 8, \lin, 1, 1);
+		~lfoSpec = ControlSpec(0, 8, \lin, 1/4, 1);
+		~knob.value("Speed", Color.red, ~ratioSpec);
+		~knob.value("LFO", Color.yellow, ~lfoSpec);
 
 		~polSpec = ControlSpec(-100, 100, \lin, 0, 0);//polar modulation spec
 		~knob.value("VolMod", Color.yellow, ~modSpec);//Keeping bounds
@@ -348,8 +349,8 @@ s.doWhenBooted({
 		SynthDef(\lfo, {
 			var cBus = ~midiCC[0];
 			var lBus = ~midiCC[1];
-			var oneTick = 1 / (cBus.kr(1, 2) / 60);
-			var hz = oneTick * lBus.kr(1, 1) / lBus.kr(1, 2);//Rate adjusted LFO
+			var oneTick = 1 / (cBus.kr(1, 2) / 60 * lBus.kr(1, 1));
+			var hz = oneTick * lBus.kr(1, 2);//Rate adjusted LFO
 			OffsetOut.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
 		}).add;//DON'T FORGET TO ADD!!!!!!
 	);
