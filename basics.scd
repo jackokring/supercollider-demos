@@ -70,6 +70,10 @@ s.boot;
 	~win;//out
 };
 
+~contHolder = { arg label;
+	~winCnt = ~winCnt + 1;
+};
+
 ~knob = { arg label = "is?", color, spec;
 	var ref = EZKnob(~win, label: label, controlSpec: spec);
 	var chan = ~ctlCnt.div(32);
@@ -457,6 +461,41 @@ s.doWhenBooted({
 		~knob.value("B", Color.yellow, ~polSpec);
 		~knob.value("C", Color.green, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
+
+
+
+		//=====================================
+		// MIDI 5 - 12
+		//=====================================
+
+		~contHolder("");//5
+		~contHolder("");//6
+		~contHolder("");//7
+		~contHolder("");//8
+
+		~contHolder("");//9
+		~contHolder("");//10
+		~contHolder("");//11
+		~contHolder("");//12
+
+		//The following two machines do tempo synced control remapping
+		//===================================
+		// PITCH MOD AND AFTERTOUCH REMAPPER
+		//===================================
+
+		~contHolder("");//13
+
+		//============================
+		// NOTE AND VELOCITY REMAPPER
+		//============================
+
+		~contHolder("");//14
+
+		//==============
+		// MACHINES END
+		//==============
+		//The notes are remapped onto CC along with velocities. Same goes for bend and mono aftertouch.
+		//These are on channels 15 and 16
 
 	);
 
