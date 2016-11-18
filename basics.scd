@@ -482,52 +482,93 @@ s.doWhenBooted({
 				var spec = ~midiCCSpec[chan][ctl % 32];
 				case
 				{ ctl < 32 } {//MSB
-					bus.get( { arg val;
-						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
-						val = (val % 128) + (128 * val);
-						val = spec.map(val / 16383);//back to 0 to 1
-						bus.set(val);
+					bus.get( { arg v;
+						v = spec.unmap(v) * 16383;//14 bit from 0 to 1
+						v = (v % 128) + (128 * val);
+						v = spec.map(v / 16383);//back to 0 to 1
+						bus.set(v);
 					});
 				}
 				{ ctl < 64 } {//LSB
-					bus.get( { arg val;
-						val = spec.unmap(val) * 16383;//14 bit from 0 to 1
-						val = val.div(128) * 128 + val;
-						val = spec.map(val / 16383);//back to 0 to 1
-						bus.set(val);
+					bus.get( { arg v;
+						v = spec.unmap(v) * 16383;//14 bit from 0 to 1
+						v = v.div(128) * 128 + val;
+						v = spec.map(v / 16383);//back to 0 to 1
+						bus.set(v);
 					});
 				}
 				{ true } { ("CC:" ++ ctl ++ " ON: " ++ (chan + 1)).postln; };//Debug
 			});
 		});
 
+		//============================================================================
+		// REDIRECTS CH16 (NOTE CONTROLLER) AND CH15 (BEND AND AFTERTOUCH CONTROLLER)
+		//============================================================================
+		//Synthetic controllers, on channel 16, lower 16 as note ratio, and higher (+16) as last velocity
+		//Bend and aftertouch (mono) on channel 15 synthetics. Tone lower 16, touch (+16)
+
+		~midiCCBend = ControlSpec(1 / 64, 64, \exp);
+		~midiCCVol = ControlSpec(0, 1, \db);
+
+		~tuneReq = { 16.do { arg i;
+			~midiCCSpec[15][i] = ~midiCCBend;
+			~midiCCSpec[15][i + 16] = ~midiCCVol;
+			~midiCC[15].subBus(i).set(1.0);
+			~midiCC[15].subBus(i + 16).set(1.0);
+			~midiCCSpec[14][i] = ~midiCCBend;
+			~midiCCSpec[14][i + 16] = ~midiCCVol;
+			~midiCC[14].subBus(i).set(1.0);
+			~midiCC[14].subBus(i + 16).set(1.0);
+		} };
+
+		~tuneReq.value;
+
 		//Must be free, so on system clock?
 		//Can immediate cotrol buses, but for synth triggers, que on a TempoClock at midiClock rate.
 		//Calc rate Based on tempo PLL.
 		MIDIFunc.noteOn({
-
+			arg vel, note, chan, uid;
+			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
+				var spec = ~midiCCSpec[15][chan];//synthetic
+				var bus = ~midiCC[15].subBus(chan);
+				//63 is 1.0 -> +6
+				bus.set(spec.map(note / 127) * (-6.midiratio));//D#5
+				spec = ~midiCCSpec[15][chan + 15];
+				bus = ~midiCC[15].subBus(chan + 16);
+				bus.set(spec.map(vel / 127));
+			});
 		});
 
-		//Like above.
+		/* //Like above.
 		MIDIFunc.noteOff({
-
-		});
+		//NEVER NEEDED IN THIS SYNTH MODEL
+		}); */
 
 		//Feed into tune control.
 		//Center 2000 hex
 		MIDIFunc.bend({
-
+			arg bend, chan, uid;
+			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
+				var spec = ~midiCCSpec[14][chan];//synthetic
+				var bus = ~midiCC[14].subBus(chan);
+				bus.set(spec.map((bend - 8192) / 8192 / 2 + 0.5));
+			});
 		});
 
 		//A monphonic max pressure event.
 		MIDIFunc.touch({
-
+			arg touch, chan, uid;
+			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
+				var spec = ~midiCCSpec[14][chan + 16];//synthetic
+				var bus = ~midiCC[14].subBus(chan + 16);
+				bus.set(spec.map(touch / 127));
+			});
 		});
 
-		//A note aftertouch event.
+		/* //A note aftertouch event.
 		MIDIFunc.polytouch({
-
-		});
+		//NEVER NEEDED IN THIS SYNTH MODEL
+		}); */
 
 		//Patch change timbral
 		MIDIFunc.program({
@@ -574,7 +615,7 @@ s.doWhenBooted({
 
 		//Play A 440 tuning tone.
 		MIDIFunc.tuneRequest({
-
+			~tuneReq.value;
 		});
 
 		//Launch a half second callback, to terminate sound, after killing any existing callback.
