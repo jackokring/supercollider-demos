@@ -14,8 +14,9 @@
 // READ CONFIG
 //=============
 ~configAll = nil;
-File.use(~path +/+ "startup.sesh", "a", { |f|
+File.use(~path +/+ "startup.sesh", "a+", { |f|
 	//Append, so ...
+	f.seek;
 	~configAll = f.readAllString;
 	//parse?
 });
@@ -198,6 +199,10 @@ s.doWhenBooted({
 			};
 			~outFB.free;
 			~outLFO.free;
+			File.use(~path +/+ "startup.sesh", "w", { |f|
+				//write
+				f.write(~configAll);//Wrie out a premade string
+			});
 		});
 
 		~resid = 0.0;
