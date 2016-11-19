@@ -25,6 +25,8 @@ s.boot;
 	Bus.control(s, 32);
 });//32 controllers and 16 channels
 
+~midiCC.postln;
+
 //=========
 // CC SPEC
 //=========
@@ -72,6 +74,7 @@ s.boot;
 
 ~contHolder = { arg label;
 	~winCnt = ~winCnt + 1;
+	~ctlCnt = ~winCnt * 32;//To ease development
 };
 
 ~knob = { arg label = "is?", color, spec;
@@ -108,6 +111,20 @@ s.boot;
 	ref;
 };
 
+~midiMon = Array.fill(32, { nil; });
+
+~ctlShow = {
+	var ref = LevelIndicator(~win, 50@90);
+	var spec = ControlSpec(0, 127, \lin);
+	var chan = ~ctlCnt.div(32);
+	var ctl = ~ctlCnt % 32;
+	ref.warning = 1.0;
+	ref.critical = 1.0;
+	~midiCCSpec[chan][ctl] = spec;//Set control spec of bus
+	~ctlCnt = ~ctlCnt + 1;
+	ref;
+};
+
 //Private utility used below
 ~noteButt = { arg i;
 	var butt = ~butt.value(
@@ -138,6 +155,7 @@ s.boot;
 //======================
 (
 s.doWhenBooted({
+	~running = true;
 	"BOOT COMPLETE!".postln;
 
 	//==============
@@ -152,10 +170,13 @@ s.doWhenBooted({
 
 		// Make default window
 		~cont.value("General Hi (MIDI ch 1)",  {
+			~running = false;
+			~midiMon = nil;//close monitor connection
 			~sync.clear;
 			s.quit;
 			Window.closeAll;
 			MIDIClient.disposeClient;
+			MIDIIn.disconnectAll;
 			~midiCC.do { |i|
 				i.free;//free bus allocation IDs
 			};
@@ -314,8 +335,12 @@ s.doWhenBooted({
 		//row 1 - Basic LFO application
 		~cont.value("Captain HiHo (MIDI ch 2)");
 		MIDIClient.init;
-		~midiSrc = {
-			MIDIClient.sources[~midiCC[1].subBus(0).floor].asMIDIInPortUID;
+		~midiSrc = 0;
+
+		~midiFix = {
+			~midiCC[1].subBus(0).get({ |v|
+				~midiSrc = MIDIClient.sources[v.floor].asMIDIInPortUID;
+		});
 		};
 
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
@@ -484,15 +509,40 @@ s.doWhenBooted({
 		// THE UNLUCKY MIDI MONITOR
 		//==========================
 
-		~contHolder.value("Unlucky Jack (MIDI ch 13)");//13
+		~cont.value("Unlucky Jack (MIDI ch 13)");//13
+		32.do { arg i;
+			~midiMon[i] = ~ctlShow.value;
+		};
+
+		AppClock.play({
+			32.do { arg i;
+				if(~midiMon != nil, { ~midiCC[12].subBus(i).get({ arg v;
+					AppClock.play({//assume app clock not preemptive of itself
+						if(~midiMon != nil, { ~midiMon[i].value = ~midiCCSpec[12][i].unmap(v); } );
+						nil;//as integer does looping
+					});
+				}); });
+			};
+			if(~midiMon != nil, {
+				~midiFix.value;//Update valid midi source
+				0.1;
+			}, nil);
+		});
 
 		//The following machine does tempo synced control remapping. There is 8 four controls parts.
-		//On, event, out, ctl ... So chan, one of 64, chan, one of 32. If you have more than 8 keyboards ... :(
-		//===================================================
-		// PITCH MOD, AFTERTOUCH, NOTE AND VELOCITY REMAPPER
-		//===================================================
+		//In, out, ctl, gain ... So chan (note vs bend polar), one of 16, one of 32, gain (polar).
+		//If you have more than 8 keyboards ... :(
+		//=============================
+		// PITCH MOD AND NOTE REMAPPER
+		//=============================
 
 		~contHolder.value("Sparkie (MIDI ch 14)");//14
+
+		//=====================================
+		// MIDI 15
+		//=====================================
+
+		~contHolder.value("");//15
 
 		//==============
 		// MACHINES END
@@ -518,13 +568,14 @@ s.doWhenBooted({
 		//LSB @ (controller + 32)
 		MIDIFunc.cc({
 			arg val, ctl, chan, uid;
-			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
+			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
 				//BUS IS ASYNC SO CALLBACK SET
-				var bus = ~midiCC[chan].subBus(ctl % 32);
-				var spec = ~midiCCSpec[chan][ctl % 32];
+				var bus = ~midiCC[chan].subBus((ctl - 1) % 32);
+				var spec = ~midiCCSpec[chan][(ctl - 1) % 32];
 				case
 				{ ctl < 32 } {//MSB
 					bus.get( { arg v;
+						//v.postln;
 						v = spec.unmap(v) * 16383;//14 bit from 0 to 1
 						v = (v % 128) + (128 * val);
 						v = spec.map(v / 16383);//back to 0 to 1
@@ -550,17 +601,10 @@ s.doWhenBooted({
 		//Bend and aftertouch (mono) on channel 15 synthetics. Tone lower 16, touch (+16)
 
 		~midiCCBend = ControlSpec(1 / 64, 64, \exp);
-		~midiCCVol = ControlSpec(0, 1, \db);
 
-		~tuneReq = { 16.do { arg i;
+		~tuneReq = { 32.do { arg i;
 			~midiCCSpec[15][i] = ~midiCCBend;
-			~midiCCSpec[15][i + 16] = ~midiCCVol;
 			~midiCC[15].subBus(i).set(1.0);
-			~midiCC[15].subBus(i + 16).set(1.0);
-			~midiCCSpec[14][i] = ~midiCCBend;
-			~midiCCSpec[14][i + 16] = ~midiCCVol;
-			~midiCC[14].subBus(i).set(1.0);
-			~midiCC[14].subBus(i + 16).set(1.0);
 		} };
 
 		~tuneReq.value;
@@ -570,14 +614,14 @@ s.doWhenBooted({
 		//Calc rate Based on tempo PLL.
 		MIDIFunc.noteOn({
 			arg vel, note, chan, uid;
-			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
+			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
 				var spec = ~midiCCSpec[15][chan];//synthetic
 				var bus = ~midiCC[15].subBus(chan);
 				//63 is 1.0 -> +6
-				bus.set(spec.map(note / 127) * (-6.midiratio));//D#5
-				spec = ~midiCCSpec[15][chan + 15];
+				bus.set(spec.map((note / 127)) * (-6.midiratio));//D#5
+				/* spec = ~midiCCSpec[15][chan + 15];
 				bus = ~midiCC[15].subBus(chan + 16);
-				bus.set(spec.map(vel / 127));
+				bus.set(spec.map(vel / 127)); */
 			});
 		});
 
@@ -590,14 +634,14 @@ s.doWhenBooted({
 		//Center 2000 hex
 		MIDIFunc.bend({
 			arg bend, chan, uid;
-			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
-				var spec = ~midiCCSpec[14][chan];//synthetic
-				var bus = ~midiCC[14].subBus(chan);
+			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
+				var spec = ~midiCCSpec[15][chan + 16];//synthetic
+				var bus = ~midiCC[15].subBus(chan + 16);
 				bus.set(spec.map((bend - 8192) / 8192 / 2 + 0.5));
 			});
 		});
 
-		//A monphonic max pressure event.
+		/* /A monphonic max pressure event.
 		MIDIFunc.touch({
 			arg touch, chan, uid;
 			if(uid == ~midiSrc.value, {//expression is not function (as while and case would be).
@@ -605,7 +649,7 @@ s.doWhenBooted({
 				var bus = ~midiCC[14].subBus(chan + 16);
 				bus.set(spec.map(touch / 127));
 			});
-		});
+		}); */
 
 		/* //A note aftertouch event.
 		MIDIFunc.polytouch({
