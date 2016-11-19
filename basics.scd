@@ -54,8 +54,6 @@ s.boot;
 	Bus.control(s, 32);
 });//32 controllers and 16 channels
 
-~midiCC.postln;
-
 //=========
 // CC SPEC
 //=========
@@ -380,7 +378,7 @@ s.doWhenBooted({
 		};
 
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
-		~knob.value("MIDI In", Color.red, ~midiSpec);
+		~knob.value("MIDI Src", Color.red, ~midiSpec);
 
 		~ratioSpec = ControlSpec(1, 8, \lin, 1, 1);
 		~lfoSpec = ControlSpec(0, 8, \lin, 1/4, 1);
@@ -579,6 +577,17 @@ s.doWhenBooted({
 		//=====================================
 
 		~contHolder.value("");//15
+
+
+		//============
+		// Notary Nob
+		//============
+		~cont.value("Notary Nob (MIDI ch 16)");//16
+		~hello = StaticText(~win, 434@374);
+		~hello.font = ~fontOff;
+		~hello.align = \center;
+		~hello.string = "<h1>Hello, and welcome to the basics synthesizers.</h1><br><br>Channel 16 helps use notes as controllers. To close use the <b>General Hi</b> close button, as the other close buttons do not work. General Hi controls the main tempo.<br><br>This software is by <a href=\"http:/kring.co.uk\">K Ring Technologies Ltd.</a> and the hope is you enjoy.<br><br>The coding was done by Simon Jackson over a few months. There are no classes defined in the code so as to make it a simple single portable file.<br><br>There is no particular versioning system apart from an up to date master branch.";
+
 
 		//==============
 		// MACHINES END
