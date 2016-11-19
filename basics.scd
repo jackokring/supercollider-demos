@@ -465,7 +465,7 @@ s.doWhenBooted({
 
 
 		//=====================================
-		// MIDI 5 - 12
+		// MIDI 5 - 13
 		//=====================================
 
 		~contHolder.value("");//5
@@ -478,16 +478,13 @@ s.doWhenBooted({
 		~contHolder.value("");//11 - The imagination machine ...
 		~contHolder.value("");//12 - Loose ends
 
-		//The following two machines do tempo synced control remapping
-		//===================================
-		// PITCH MOD AND AFTERTOUCH REMAPPER
-		//===================================
-
 		~contHolder.value("");//13
 
-		//============================
-		// NOTE AND VELOCITY REMAPPER
-		//============================
+		//The following machine does tempo synced control remapping. There is 8 four controls parts.
+		//On, event, out, ctl ... So chan, one of 64, chan, one of 32. If you have more than 8 keyboards ... :(
+		//===================================================
+		// PITCH MOD, AFTERTOUCH, NOTE AND VELOCITY REMAPPER
+		//===================================================
 
 		~contHolder.value("");//14
 
