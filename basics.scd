@@ -60,14 +60,20 @@ s.boot;
 //====================
 // A WINDOW CONTAINER
 //====================
-~cont = { arg label = "is?", close = { };
-	var x, y;
-	x = (Window.screenBounds.width / 2) + (40 * ~winCnt) - 220;
-	y = (Window.screenBounds.height / 2) - (40 * ~winCnt) - 170;
+~winSpace = 25;
+~xmulSpace = 2.5;
+
+~cont = { arg label = "is?", close = nil;
+	var x, y, w;
+	x = (Window.screenBounds.width / 2) + (~winSpace * (~winCnt - 8) * ~xmulSpace) - 220;
+	y = (Window.screenBounds.height / 2) - (~winSpace * (~winCnt - 8)) - 170;
 	~win = Window(label, Rect(x, y, 440, 380), false);
 	~winCnt = ~winCnt + 1;
 	~win.front;
-	~win.onClose = close;
+	if(close == nil, { ~win.userCanClose = false; }, {
+		~win.onClose = close;
+		~win.alwaysOnTop = true;
+	});//Always on top first window (asCloseMaster)
 	~win.view.decorator = FlowLayout(~win.view.bounds, 6@4);
 	~win;//out
 };
@@ -183,7 +189,7 @@ s.doWhenBooted({
 			~outFB.free;
 			~outLFO.free;
 		});
-		~win.alwaysOnTop = true;
+
 		~resid = 0.0;
 
 		~tick = { arg beats, time, clock;
@@ -436,9 +442,9 @@ s.doWhenBooted({
 
 
 
-		//==================
-		// EFFECTS GUI Beat
-		//==================
+		//================
+		// DRUMS GUI Beat
+		//================
 
 		//row 1 - Basic Controls
 		~cont.value("Corporal Beat (MIDI ch 4)");
