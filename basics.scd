@@ -10,6 +10,16 @@
 ~outBusBase = 0;
 ~path = PathName(thisProcess.nowExecutingPath).parentPath;//for +/+
 
+//=============
+// READ CONFIG
+//=============
+~configAll = nil;
+File.use(~path +/+ "startup.sesh", "a", { |f|
+	//Append, so ...
+	~configAll = f.readAllString;
+	//parse?
+});
+
 //=========================
 // START AND TEMPLATE CTRL
 //=========================
