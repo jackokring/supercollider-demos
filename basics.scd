@@ -14,12 +14,30 @@
 // READ CONFIG
 //=============
 ~configAll = nil;
-File.use(~path +/+ "startup.sesh", "a+", { |f|
-	//Append, so ...
-	f.seek;
-	~configAll = f.readAllString;
-	//parse?
-});
+
+~load = { arg name = "startup.sesh";
+	var what = ~path +/+ name;
+	var ev = {
+		File.use(what, "a+", { |f|
+			//Append, so ...
+			f.seek;
+			~configAll = f.readAllString;
+			//parse?
+		});
+	};
+	if(~running, { if(name == nil, { Dialog.openPanel({ |f| what = f; ev.value; } , { }); }, ev) });
+};
+
+~save = { arg name = "startup.sesh";
+	var what = ~path +/+ name;
+	var ev = {
+		File.use(what, "w", { |f|
+			//write
+			f.write(~configAll);//Write out a premade string
+		});
+	};
+	if(~running, { if(name == nil, { Dialog.savePanel({ |f| what = f; ev.value; } , { }); }, ev) });
+};
 
 //=========================
 // START AND TEMPLATE CTRL
@@ -172,7 +190,7 @@ s.boot;
 //======================
 (
 s.doWhenBooted({
-	~running = true;
+	~running = false;
 	"BOOT COMPLETE!".postln;
 
 	//==============
@@ -187,6 +205,7 @@ s.doWhenBooted({
 
 		// Make default window
 		~cont.value("General Hi (MIDI ch 1)",  {
+			~save.value;
 			~running = false;
 			~midiMon = nil;//close monitor connection
 			~sync.clear;
@@ -199,10 +218,6 @@ s.doWhenBooted({
 			};
 			~outFB.free;
 			~outLFO.free;
-			File.use(~path +/+ "startup.sesh", "w", { |f|
-				//write
-				f.write(~configAll);//Wrie out a premade string
-			});
 		});
 
 		~resid = 0.0;
@@ -570,6 +585,8 @@ s.doWhenBooted({
 		//==============
 		//The notes are remapped onto CC along with velocities. Same goes for bend and mono aftertouch.
 		//These are on channels 15 and 16
+		~running = true;//All OK to load and save
+		~load.value;
 
 	);
 
