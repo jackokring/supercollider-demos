@@ -465,7 +465,7 @@ s.doWhenBooted({
 
 
 		//=====================================
-		// MIDI 5 - 13
+		// MIDI 5 - 12
 		//=====================================
 
 		~contHolder.value("");//5
@@ -478,7 +478,13 @@ s.doWhenBooted({
 		~contHolder.value("");//11 - The imagination machine ...
 		~contHolder.value("");//12 - Loose ends
 
-		~contHolder.value("");//13
+		//The following machine just IDs your controllers and is a good channel for sending MIDI to null.
+		//You could perhaps use 14, 15 and 16, but that could interfere with controllers.
+		//==========================
+		// THE UNLUCKY MIDI MONITOR
+		//==========================
+
+		~contHolder.value("Unlucky Jack (MIDI ch 13)");//13
 
 		//The following machine does tempo synced control remapping. There is 8 four controls parts.
 		//On, event, out, ctl ... So chan, one of 64, chan, one of 32. If you have more than 8 keyboards ... :(
@@ -486,7 +492,7 @@ s.doWhenBooted({
 		// PITCH MOD, AFTERTOUCH, NOTE AND VELOCITY REMAPPER
 		//===================================================
 
-		~contHolder.value("");//14
+		~contHolder.value("Sparkie (MIDI ch 14)");//14
 
 		//==============
 		// MACHINES END
