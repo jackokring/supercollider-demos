@@ -451,36 +451,36 @@ s.doWhenBooted({
 		~knob.value("Paths", Color.red, ~modSpec);
 
 		//row 2 - Effect Shaper
-		//https://en.wikipedia.org/wiki/Chebyshev_equation (Even Pairs add and mul?)
+		//https://en.wikipedia.org/wiki/Chebyshev_equation (Evens mul?)
 		//https://en.wikipedia.org/wiki/Legendre_polynomials
 		//https://en.wikipedia.org/wiki/Bernoulli_polynomials (Offset + Normalize)
-		~knob.value("Shape", Color.cyan, ~polSpec);
-		~knob.value("Even", Color.cyan, ~modSpec);
-		~knob.value("Odds", Color.cyan, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
+		~knob.value("Basis", Color.cyan, ~modSpec);
+		~knob.value("Order", Color.cyan, ~modSpec);//Curve set blender
+		~knob.value("Odds", Color.cyan, ~modSpec);//Cross mul level
+		~knob.value("Mix", Color.green, ~modSpec);
 
 		//row 2 - Effect Compressor
-		~knob.value("Attack", Color.magenta, ~polSpec);
-		~knob.value("Decay", Color.magenta, ~polSpec);
-		~knob.value("Gain", Color.magenta, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
+		~knob.value("Attack", Color.magenta, ~modSpec);
+		~knob.value("Decay", Color.magenta, ~modSpec);
+		~knob.value("Gain", Color.magenta, ~modSpec);
+		~knob.value("Mix", Color.green, ~modSpec);
 
 		//row 3 - Effect Flange
-		~knob.value("DRatio", Color.white, ~polSpec);
+		~knob.value("DRatio", Color.white, ~modSpec);
 		~knob.value("MRatio", Color.white, ~modSpec);
-		~knob.value("Depth", Color.white, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
+		~knob.value("Depth", Color.white, ~modSpec);
+		~knob.value("Mix", Color.green, ~modSpec);
 
-		//row 3 - Effect 4
-		~knob.value("A", Color.grey, ~polSpec);
+		//row 3 - Effect Delay
+		~knob.value("Ratio", Color.blue, ~modSpec);//Tempo locked
+		~knob.value("Feedfor", Color.blue, ~polSpec);//All-pass
+		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input (also phase feedback polarity)
+		~knob.value("Mix", Color.green, ~modSpec);
+
+		//row 4 - Effect 5
+		~knob.value("", Color.grey, ~polSpec);
 		~knob.value("B", Color.grey, ~polSpec);
 		~knob.value("C", Color.grey, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		//row 4 - Effect Delay
-		~knob.value("Ratio", Color.blue, ~polSpec);//Tempo locked
-		~knob.value("Noise", Color.blue, ~modSpec);//Output sampling offset using pink noise phasing
-		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input
 		~knob.value("Mix", Color.green, ~polSpec);
 
 		//row 4 - Stereo Controls
