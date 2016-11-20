@@ -447,36 +447,42 @@ s.doWhenBooted({
 		~knob.value("SRoute", Color.yellow, ~modSpec);
 		~knob.value("Paths", Color.red, ~modSpec);
 
-		//row 2 - Effects Shaper and Overdrive
+		//row 2 - Effect Shaper
+		//https://en.wikipedia.org/wiki/Chebyshev_equation (Even Pairs add and mul?)
+		//https://en.wikipedia.org/wiki/Legendre_polynomials
+		//https://en.wikipedia.org/wiki/Bernoulli_polynomials (Offset + Normalize)
 		~knob.value("A", Color.cyan, ~polSpec);
 		~knob.value("B", Color.cyan, ~modSpec);
 		~knob.value("C", Color.cyan, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
+		//row 2 - Effect 2
 		~knob.value("A", Color.magenta, ~polSpec);
 		~knob.value("B", Color.magenta, ~polSpec);
 		~knob.value("C", Color.magenta, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 3 - Effects 3 and 4
+		//row 3 - Effect 3
 		~knob.value("A", Color.white, ~polSpec);
 		~knob.value("B", Color.white, ~modSpec);
 		~knob.value("C", Color.white, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
+		//row 3 - Effect 4
 		~knob.value("A", Color.grey, ~polSpec);
 		~knob.value("B", Color.grey, ~polSpec);
 		~knob.value("C", Color.grey, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 4 - Effect Delay and Stereo Controls
+		//row 4 - Effect Delay
 		~knob.value("Ratio", Color.blue, ~polSpec);//Tempo locked
 		~knob.value("Phase", Color.blue, ~modSpec);//Output sampling offset using input phasing
 		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input
 		~knob.value("Mix", Color.green, ~polSpec);
 
+		//row 4 - Stereo Controls
 		~knob.value("LOut", Color.red, ~polSpec);//Left channel out select
-		~knob.value("ROut", Color.yellow, ~polSpec);
+		~knob.value("ROut", Color.red, ~polSpec);
 		~knob.value("PLeft", Color.green, ~polSpec);//Phase polarity of left
 		~knob.value("PRight", Color.green, ~polSpec);
 
