@@ -86,7 +86,7 @@ s.boot;
 	[ 0, 3, 2, 1, 4, 7, 6, 5 ],//1
 	[ 4, 5, 2, 7, 1, 2, 6, 4 ],//2
 	[ 0, 5, 2, 7, 4, 1, 6, 3 ],//3
-	[ 7, 6, 5, 4, 3, 2, 1, 0 ]//4
+	[ 0, 1, 4, 5, 2, 3, 6, 7 ]//4
 ];
 
 ~fontOn = Font(Font.default.name, 30);//note on!!
@@ -232,7 +232,7 @@ s.doWhenBooted({
 			if(~running, {//prevent race on initialization
 				~midiCC[0].get({ arg iBus;
 					~midiCC[1].get({ arg jBus;
-						var fill = ~fillArr[jBus[stepIdx + 24].floor];//The fill
+						var fill = ~fillArr[jBus[~stepIdx + 24].floor];//The fill
 						var note = fill[~noteIdx];//The note of the fill
 						~sync.tempo = iBus[2] / 60 * jBus[1];//master tempo
 						//~sync.tempo.postln;
