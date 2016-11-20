@@ -459,16 +459,16 @@ s.doWhenBooted({
 		~knob.value("Odds", Color.cyan, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 2 - Effect Sustain
-		~knob.value("Sustain", Color.magenta, ~polSpec);
-		~knob.value("Ratio", Color.magenta, ~polSpec);//Tempo basis
-		~knob.value("Chopper", Color.magenta, ~polSpec);
+		//row 2 - Effect Compressor
+		~knob.value("Attack", Color.magenta, ~polSpec);
+		~knob.value("Decay", Color.magenta, ~polSpec);
+		~knob.value("Gain", Color.magenta, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 3 - Effect 3
-		~knob.value("A", Color.white, ~polSpec);
-		~knob.value("B", Color.white, ~modSpec);
-		~knob.value("C", Color.white, ~polSpec);
+		//row 3 - Effect Flange
+		~knob.value("DRatio", Color.white, ~polSpec);
+		~knob.value("MRatio", Color.white, ~modSpec);
+		~knob.value("Depth", Color.white, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
 		//row 3 - Effect 4
@@ -479,7 +479,7 @@ s.doWhenBooted({
 
 		//row 4 - Effect Delay
 		~knob.value("Ratio", Color.blue, ~polSpec);//Tempo locked
-		~knob.value("Phase", Color.blue, ~modSpec);//Output sampling offset using input phasing
+		~knob.value("Noise", Color.blue, ~modSpec);//Output sampling offset using pink noise phasing
 		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input
 		~knob.value("Mix", Color.green, ~polSpec);
 
