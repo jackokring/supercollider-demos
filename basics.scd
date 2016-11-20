@@ -81,6 +81,14 @@ s.boot;
 	'hi.blip'
 ];
 
+~fillArr = [
+	[ 0, 1, 2, 3, 4, 5, 6, 7 ],//0
+	[ 0, 3, 2, 1, 4, 7, 6, 5 ],//1
+	[ 4, 5, 2, 7, 1, 2, 6, 4 ],//2
+	[ 0, 5, 2, 7, 4, 1, 6, 3 ],//3
+	[ 0, 7, 6, 5, 4, 3, 2, 1 ]//4
+];
+
 ~fontOn = Font(Font.default.name, 30);//note on!!
 ~fontOff = Font(Font.default.name, 15);//regular size
 
@@ -204,9 +212,9 @@ s.doWhenBooted({
 		// Make default window
 		~cont.value("General Hi (MIDI ch 1)",  {
 			~save.value;
+			~sync.clear;
 			~running = false;
 			~midiMon = nil;//close monitor connection
-			~sync.clear;
 			s.quit;
 			Window.closeAll;
 			MIDIClient.disposeClient;
@@ -224,13 +232,15 @@ s.doWhenBooted({
 			if(~running, {//prevent race on initialization
 				~midiCC[0].get({ arg iBus;
 					~midiCC[1].get({ arg jBus;
+						var fill = ~fillArr[jBus[stepIdx + 24].floor];//The fill
+						var note = fill[~noteIdx];//The note of the fill
 						~sync.tempo = iBus[2] / 60 * jBus[1];//master tempo
 						//~sync.tempo.postln;
 						//N.B. ==========================================
 						// WARNING: There is a one beat scheduling delay
 						//===============================================
 						Synth(\lfo);
-						Synth(~envArr[iBus[~noteIdx + 24].floor], [ key: iBus[~noteIdx + 16] + jBus[~stepIdx + 16] ]);
+						Synth(~envArr[iBus[note + 24].floor], [ key: iBus[note + 16] + jBus[~stepIdx + 16] ]);
 						//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 						//I think this is to do with the tick already having passed at the schedule, and jitter effect
 						//cancellation.
