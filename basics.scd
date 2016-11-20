@@ -436,14 +436,17 @@ s.doWhenBooted({
 		//row 1 - Basic Controls
 		~cont.value("Sargent Sift (MIDI ch 3)");
 
+		//Left In Preamp
 		~knob.value("Left", Color.yellow, ~modSpec);
 		~knob.value("LTone", Color.green, ~modSpec);
 		~knob.value("LRoute", Color.yellow, ~modSpec);
 
+		//Right In Preamp
 		~knob.value("Right", Color.yellow, ~modSpec);
 		~knob.value("RTone", Color.green, ~modSpec);
 		~knob.value("RRoute", Color.yellow, ~modSpec);
 
+		//Internal Routing
 		~knob.value("SRoute", Color.yellow, ~modSpec);
 		~knob.value("Paths", Color.red, ~modSpec);
 
@@ -451,15 +454,15 @@ s.doWhenBooted({
 		//https://en.wikipedia.org/wiki/Chebyshev_equation (Even Pairs add and mul?)
 		//https://en.wikipedia.org/wiki/Legendre_polynomials
 		//https://en.wikipedia.org/wiki/Bernoulli_polynomials (Offset + Normalize)
-		~knob.value("A", Color.cyan, ~polSpec);
-		~knob.value("B", Color.cyan, ~modSpec);
-		~knob.value("C", Color.cyan, ~polSpec);
+		~knob.value("Shape", Color.cyan, ~polSpec);
+		~knob.value("Even", Color.cyan, ~modSpec);
+		~knob.value("Odds", Color.cyan, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 2 - Effect 2
-		~knob.value("A", Color.magenta, ~polSpec);
-		~knob.value("B", Color.magenta, ~polSpec);
-		~knob.value("C", Color.magenta, ~polSpec);
+		//row 2 - Effect Sustain
+		~knob.value("Sustain", Color.magenta, ~polSpec);
+		~knob.value("Ratio", Color.magenta, ~polSpec);//Tempo basis
+		~knob.value("Chopper", Color.magenta, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
 		//row 3 - Effect 3
@@ -495,49 +498,44 @@ s.doWhenBooted({
 		//row 1 - Basic Controls
 		~cont.value("Corporal Beat (MIDI ch 4)");
 
-		~knob.value("Left", Color.yellow, ~modSpec);
-		~knob.value("LTone", Color.green, ~modSpec);
-		~knob.value("LRoute", Color.yellow, ~modSpec);
+		//Percussive modelling - tension based frequency control
+		//Using Leff = sqrt(L^2 + Amp^2)
+		//And f = V / Leff
+		//And a soft clip compressor
+		//By altering the 2 constants L^2 and V ...
+		//Then there is the release envekope time R ...
+		//And a pattern selector
+		~knob.value("V1", Color.yellow, ~modSpec);
+		~knob.value("V2", Color.yellow, ~modSpec);
+		~knob.value("V3", Color.yellow, ~modSpec);
+		~knob.value("V4", Color.yellow, ~modSpec);
+		~knob.value("V5", Color.yellow, ~modSpec);
+		~knob.value("V6", Color.yellow, ~modSpec);
+		~knob.value("V7", Color.yellow, ~modSpec);
+		~knob.value("V8", Color.yellow, ~modSpec);
 
-		~knob.value("Right", Color.yellow, ~modSpec);
-		~knob.value("RTone", Color.green, ~modSpec);
-		~knob.value("RRoute", Color.yellow, ~modSpec);
+		//row 2
+		~knob.value("L1", Color.yellow, ~modSpec);
+		~knob.value("L2", Color.yellow, ~modSpec);
+		~knob.value("L3", Color.yellow, ~modSpec);
+		~knob.value("L4", Color.yellow, ~modSpec);
+		~knob.value("L5", Color.yellow, ~modSpec);
+		~knob.value("L6", Color.yellow, ~modSpec);
+		~knob.value("L7", Color.yellow, ~modSpec);
+		~knob.value("L8", Color.yellow, ~modSpec);
 
-		~knob.value("SRoute", Color.yellow, ~modSpec);
-		~knob.value("Paths", Color.red, ~modSpec);
+		//row 3
+		~knob.value("R1", Color.green, ~modSpec);
+		~knob.value("R2", Color.green, ~modSpec);
+		~knob.value("R3", Color.green, ~modSpec);
+		~knob.value("R4", Color.green, ~modSpec);
+		~knob.value("R5", Color.green, ~modSpec);
+		~knob.value("R6", Color.green, ~modSpec);
+		~knob.value("R7", Color.green, ~modSpec);
+		~knob.value("R8", Color.green, ~modSpec);
 
-		//row 2 - Effects 1 and 2
-		~knob.value("A", Color.cyan, ~polSpec);
-		~knob.value("B", Color.cyan, ~modSpec);
-		~knob.value("C", Color.cyan, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		~knob.value("A", Color.magenta, ~polSpec);
-		~knob.value("B", Color.magenta, ~polSpec);
-		~knob.value("C", Color.magenta, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		//row 3 - Effects 3 and 4
-		~knob.value("A", Color.white, ~polSpec);
-		~knob.value("B", Color.white, ~modSpec);
-		~knob.value("C", Color.white, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		~knob.value("A", Color.grey, ~polSpec);
-		~knob.value("B", Color.grey, ~polSpec);
-		~knob.value("C", Color.grey, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		//row 4 - Effects 5 and Stereo Controls
-		~knob.value("A", Color.blue, ~polSpec);
-		~knob.value("B", Color.blue, ~modSpec);
-		~knob.value("C", Color.blue, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		~knob.value("A", Color.red, ~polSpec);
-		~knob.value("B", Color.yellow, ~polSpec);
-		~knob.value("C", Color.green, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
+		//row 4
+		~noteButts.value;
 
 
 
