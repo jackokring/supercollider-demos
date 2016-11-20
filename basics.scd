@@ -477,15 +477,15 @@ s.doWhenBooted({
 		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input (also phase feedback polarity)
 		~knob.value("Mix", Color.green, ~modSpec);
 
-		//row 4 - Effect 5
-		~knob.value("", Color.grey, ~polSpec);
-		~knob.value("B", Color.grey, ~polSpec);
-		~knob.value("C", Color.grey, ~polSpec);
+		//row 4 - Effect Subshift
+		~knob.value("Ratio", Color.grey, ~modSpec);//Delay timing
+		~knob.value("Down", Color.grey, ~modSpec);//Tuning
+		~knob.value("Sectors", Color.grey, ~modSpec);//Amount of overlay sectors (>1)
 		~knob.value("Mix", Color.green, ~polSpec);
 
 		//row 4 - Stereo Controls
-		~knob.value("LOut", Color.red, ~polSpec);//Left channel out select
-		~knob.value("ROut", Color.red, ~polSpec);
+		~knob.value("LOut", Color.red, ~modSpec);//Left channel out select
+		~knob.value("ROut", Color.red, ~modSpec);
 		~knob.value("PLeft", Color.green, ~polSpec);//Phase polarity of left
 		~knob.value("PRight", Color.green, ~polSpec);
 
