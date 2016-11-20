@@ -535,15 +535,61 @@ s.doWhenBooted({
 		~knob.value("R8", Color.green, ~modSpec);
 
 		//row 4
+		//Selects pattern row in MIDI 5 Stick
 		~noteButts.value;
 
 
+		//=================
+		// DRUMS GUI Stick
+		//=================
+
+		//Basically note pattern step volumes
+		~cont.value("Private Stick (MIDI ch 5)");
+
+		//Pattern 1
+		~knob.value("@0", Color.red, ~modSpec);
+		~knob.value("@1", Color.red, ~modSpec);
+		~knob.value("@2", Color.red, ~modSpec);
+		~knob.value("@3", Color.red, ~modSpec);
+		~knob.value("R4", Color.red, ~modSpec);
+		~knob.value("@5", Color.red, ~modSpec);
+		~knob.value("@6", Color.red, ~modSpec);
+		~knob.value("@7", Color.red, ~modSpec);
+
+		//Pattern 2
+		~knob.value("@0", Color.yellow, ~modSpec);
+		~knob.value("@1", Color.yellow, ~modSpec);
+		~knob.value("@2", Color.yellow, ~modSpec);
+		~knob.value("@3", Color.yellow, ~modSpec);
+		~knob.value("@4", Color.yellow, ~modSpec);
+		~knob.value("@5", Color.yellow, ~modSpec);
+		~knob.value("@6", Color.yellow, ~modSpec);
+		~knob.value("@7", Color.yellow, ~modSpec);
+
+		//Pattern 3
+		~knob.value("@0", Color.green, ~modSpec);
+		~knob.value("@1", Color.green, ~modSpec);
+		~knob.value("@2", Color.green, ~modSpec);
+		~knob.value("@3", Color.green, ~modSpec);
+		~knob.value("@4", Color.green, ~modSpec);
+		~knob.value("@5", Color.green, ~modSpec);
+		~knob.value("@6", Color.green, ~modSpec);
+		~knob.value("@7", Color.green, ~modSpec);
+
+		//Pattern 4
+		~knob.value("@0", Color.blue, ~modSpec);
+		~knob.value("@1", Color.blue, ~modSpec);
+		~knob.value("@2", Color.blue, ~modSpec);
+		~knob.value("@3", Color.blue, ~modSpec);
+		~knob.value("@4", Color.blue, ~modSpec);
+		~knob.value("@5", Color.blue, ~modSpec);
+		~knob.value("@6", Color.blue, ~modSpec);
+		~knob.value("@7", Color.blue, ~modSpec);
 
 		//=====================================
-		// MIDI 5 - 12
+		// MIDI 6 - 12
 		//=====================================
 
-		~contHolder.value("");//5
 		~contHolder.value("");//6
 		~contHolder.value("");//7
 		~contHolder.value("");//8
