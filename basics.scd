@@ -447,7 +447,7 @@ s.doWhenBooted({
 		~knob.value("SRoute", Color.yellow, ~modSpec);
 		~knob.value("Paths", Color.red, ~modSpec);
 
-		//row 2 - Effects 1 and 2
+		//row 2 - Effects Shaper and Overdrive
 		~knob.value("A", Color.cyan, ~polSpec);
 		~knob.value("B", Color.cyan, ~modSpec);
 		~knob.value("C", Color.cyan, ~polSpec);
@@ -469,16 +469,16 @@ s.doWhenBooted({
 		~knob.value("C", Color.grey, ~polSpec);
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		//row 4 - Effects 5 and Stereo Controls
-		~knob.value("A", Color.blue, ~polSpec);
-		~knob.value("B", Color.blue, ~modSpec);
-		~knob.value("C", Color.blue, ~polSpec);
+		//row 4 - Effect Delay and Stereo Controls
+		~knob.value("Ratio", Color.blue, ~polSpec);//Tempo locked
+		~knob.value("Phase", Color.blue, ~modSpec);//Output sampling offset using input phasing
+		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input
 		~knob.value("Mix", Color.green, ~polSpec);
 
-		~knob.value("A", Color.red, ~polSpec);
-		~knob.value("B", Color.yellow, ~polSpec);
-		~knob.value("C", Color.green, ~polSpec);
-		~knob.value("Mix", Color.green, ~polSpec);
+		~knob.value("LOut", Color.red, ~polSpec);//Left channel out select
+		~knob.value("ROut", Color.yellow, ~polSpec);
+		~knob.value("PLeft", Color.green, ~polSpec);//Phase polarity of left
+		~knob.value("PRight", Color.green, ~polSpec);
 
 
 
