@@ -369,7 +369,7 @@ s.doWhenBooted({
 		variants: (
 			null: [r: 0.01, l: 0],
 			note: [r: 1],
-			accent: [r: 1, l: 2],
+			accent: [r: 1, l: 1.6],
 			long: [r: 3],
 			blip: [r: 0.3])
 		).add;
