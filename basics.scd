@@ -332,7 +332,7 @@ s.doWhenBooted({
 				(PinkNoise.ar * mBus.kr(1, 9) / 100)) / 3;// <5
 			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
-			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
+			var env = EnvGen.kr(Env.perc(0.1, r * rl, l), doneAction: 2);
 			var polEnv = (env * mBus.kr(1, 8) / 100 * 12).midiratio.lag;
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip)) * polEnv;//Pop elimination
 			var plEnv = (env * mBus.kr(1, 10) / 100) + 1;
@@ -358,7 +358,7 @@ s.doWhenBooted({
 			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
 			var thEnv = (env * mBus.kr(1, 11) / 100 * 12).midiratio;
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt * thEnv);//DC removal and low cut
-			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar).squared);
+			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 200 * ~outLFO.ar).squared);
 
 			Out.kr(fbbus, postLFO);//Synthesis complete
 
@@ -391,7 +391,7 @@ s.doWhenBooted({
 		~midiSpec = ControlSpec(0, max(MIDIClient.sources.size - 1, 0), \lin, 1, 0);
 		~knob.value("MIDI Src", Color.red, ~midiSpec);
 
-		~ratioSpec = ControlSpec(1, 8, \lin, 1, 1);
+		~ratioSpec = ControlSpec(1, 4, \lin, 1, 1);
 		~lfoSpec = ControlSpec(0, 8, \lin, 1/4, 1);
 		~knob.value("Speed", Color.red, ~ratioSpec);
 		~knob.value("LFO", Color.yellow, ~lfoSpec);
