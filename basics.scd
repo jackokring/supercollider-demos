@@ -449,12 +449,12 @@ s.doWhenBooted({
 		~left = Bus.audio(s);
 		~right = Bus.audio(s);
 
-		SynthDef(\preamp, { arg input, output;
+		SynthDef(\preamp, { arg input, output, base;
 			var in = SoundIn.ar(input);
 			var cBus = ~midiCC[2];//the controls
-			var gain = cBus.kr(1, 0) / 100;
-			var tone = cBus.kr(1, 1);
-			var fuzz = cBus.kr(1, 2) / 4;
+			var gain = cBus.kr(1, 0 + base) / 100;
+			var tone = cBus.kr(1, 1 + base);
+			var fuzz = cBus.kr(1, 2 + base) / 4;
 			var lpf = LPF.ar(in, (69 + tone).lag.midicps);
 			var sig = (lpf * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
@@ -463,8 +463,8 @@ s.doWhenBooted({
 		}).add;
 
 		AppClock.play({
-			Synth(\preamp, [ input: 0, output: ~left ]);
-			Synth(\preamp, [ input: 1, output: ~right ]);
+			Synth(\preamp, [ input: 0, output: ~left, base: 0 ]);
+			Synth(\preamp, [ input: 1, output: ~right, base: 3 ]);
 		});
 
 		//Internal Routing
