@@ -205,7 +205,7 @@ s.doWhenBooted({
 	(
 		//FB VIA A BUS
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Bus.control(s);//the output (pre volume)
+		~outFB = Bus.control(s, 8);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
 		~outLFO = Bus.audio(s);
 
@@ -240,7 +240,9 @@ s.doWhenBooted({
 						// WARNING: There is a one beat scheduling delay
 						//===============================================
 						Synth(\lfo);
-						Synth(~envArr[iBus[note + 24].floor], [ key: iBus[note + 16] + jBus[~stepIdx + 16] ]);
+						Synth(~envArr[iBus[note + 24].floor],
+							[ key: iBus[note + 16] + jBus[~stepIdx + 16],
+								fbbus: ~outFB.subBus(~noteIdx), fbidx: ~noteIdx ]);
 						//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 						//I think this is to do with the tick already having passed at the schedule, and jitter effect
 						//cancellation.
@@ -319,18 +321,18 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, { arg key = 0, r = 1, l = 1;//last for variants
+		SynthDef(\hi, { arg key = 0, r = 1, l = 1, fbbus, fbidx;//last for variants
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var mBus = ~midiCC[1];//The modulation bus
 
 			var note = iBus.kr(1, 6) + 69 + key + (mBus.kr(1, 5) / 100 * 3 * ~outLFO.ar);//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
-			var out = ~outFB.kr;//Get feedback bus
+			var out = ~outFB.kr(1, fbidx);//Get feedback bus
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
-			var stip = out * (iBus.kr(1, 5) / 200).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
-			PinkNoise.ar * mBus.kr(1, 9) / 100;// <5
+			var stip = out * (iBus.kr(1, 5) / 100).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
+			(PinkNoise.ar * mBus.kr(1, 9) / 100);// <5
 			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
@@ -361,10 +363,10 @@ s.doWhenBooted({
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt * thEnv);//DC removal and low cut
 			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar).squared);
 
-			Out.kr(~outFB, postLFO);//Synthesis complete
+			Out.kr(fbbus, postLFO);//Synthesis complete
 
 			//Render out
-			OffsetOut.ar(~outBusBase, (postLFO * (iBus.kr(1, 4).dbamp))!2);//output audio
+			Out.ar(~outBusBase, (postLFO * (iBus.kr(1, 4).dbamp))!2);//output audio
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
@@ -426,7 +428,7 @@ s.doWhenBooted({
 			var lBus = ~midiCC[1];
 			var oneTick = 1 / (cBus.kr(1, 2) / 60 * lBus.kr(1, 1));
 			var hz = oneTick * lBus.kr(1, 2);//Rate adjusted LFO
-			OffsetOut.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
+			Out.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
 		}).add;//DON'T FORGET TO ADD!!!!!!
 
 		//==================
