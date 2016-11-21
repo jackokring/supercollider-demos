@@ -438,15 +438,16 @@ s.doWhenBooted({
 		//row 1 - Basic Controls
 		~cont.value("Sargent Sift (MIDI ch 3)");
 
+		~boostSpec = ControlSpec(-inf, 24, \db, 0, 12);
 		//Left In Preamp
-		~knob.value("Left", Color.yellow, ~modSpec);
+		~knob.value("Left", Color.yellow, ~volSpec);
 		~knob.value("LTone", Color.green, ~filterSpec);
-		~knob.value("LFuzz", Color.green, ~modSpec);
+		~knob.value("LFuzz", Color.green, ~boostSpec);
 
 		//Right In Preamp
-		~knob.value("Right", Color.yellow, ~modSpec);
+		~knob.value("Right", Color.yellow, ~volSpec);
 		~knob.value("RTone", Color.green, ~filterSpec);
-		~knob.value("RFuzz", Color.green, ~modSpec);
+		~knob.value("RFuzz", Color.green, ~boostSpec);
 
 		~left = Bus.audio(s);
 		~right = Bus.audio(s);
@@ -454,9 +455,9 @@ s.doWhenBooted({
 		SynthDef(\preamp, { arg input, output, base;
 			var in = SoundIn.ar(input);
 			var cBus = ~midiCC[2];//the controls
-			var gain = cBus.kr(1, 0 + base) / 100;
+			var gain = cBus.kr(1, 0 + base).dbamp;
 			var tone = cBus.kr(1, 1 + base);
-			var fuzz = cBus.kr(1, 2 + base) / 4;
+			var fuzz = cBus.kr(1, 2 + base).dbamp;
 			var lpf = LPF.ar(in, (69 + tone).lag.midicps);
 			var sig = (lpf * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
