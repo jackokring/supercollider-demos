@@ -328,8 +328,8 @@ s.doWhenBooted({
 			var out = ~outFB.kr(1, fbidx);//Get feedback bus
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
-			var stip = out * (iBus.kr(1, 5) / 100).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
-			(PinkNoise.ar * mBus.kr(1, 9) / 100);// <5
+			var stip = (out * (iBus.kr(1, 5) / 100).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
+				(PinkNoise.ar * mBus.kr(1, 9) / 100)) / 3;// <5
 			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
 
 			var env = EnvGen.kr(Env.perc(0.01, r * rl, l), doneAction: 2);
@@ -477,7 +477,7 @@ s.doWhenBooted({
 			var sig = (in1 * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
 			var post = ((2 * soft * gain) + ~left.ar + ~right.ar) / 4;//da mix within unit range
-			Out.ar(~outBusBase ! 2, post);
+			Out.ar(~outBusBase, post ! 2);
 		}).add;
 
 		AppClock.play({
