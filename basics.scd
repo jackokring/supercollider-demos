@@ -353,7 +353,7 @@ s.doWhenBooted({
 
 			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 10 * plEnv) + lpf).clip(-1.0, 1.0);//hard
 			//A nicked cubic clip with end differential matching.
-			var plate = q * (3 - q.squared) / 3;//softer
+			var plate = q * (3 - q.squared) / 2;//softer
 			var link = LPF.ar(plate, filt);
 
 			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
@@ -439,12 +439,27 @@ s.doWhenBooted({
 		//Left In Preamp
 		~knob.value("Left", Color.yellow, ~modSpec);
 		~knob.value("LTone", Color.green, ~modSpec);
-		~knob.value("LRoute", Color.yellow, ~modSpec);
+		~knob.value("LFuzz", Color.green, ~modSpec);
+
+		~left = Bus.audio(s);
+
+		SynthDef(\lpreamp, {
+			var in = SoundIn.ar(0);
+			var cBus = ~midiCC[2];//the controls
+			var gain = cBus.kr(1, 0) / 100;
+			var tone = cBus.kr(1, 1);
+			var fuzz = cBus.kr(1, 2) / 4;
+
+			var sig = in * fuzz.clip(-1.0, 1.0);
+			var soft = sig * (3 - sig.squared) / 2;//soft
+			var post = soft * gain;
+			Out.ar(~left, post);
+		}).add;
 
 		//Right In Preamp
 		~knob.value("Right", Color.yellow, ~modSpec);
 		~knob.value("RTone", Color.green, ~modSpec);
-		~knob.value("RRoute", Color.yellow, ~modSpec);
+		~knob.value("RFuzz", Color.green, ~modSpec);
 
 		//Internal Routing
 		~knob.value("SRoute", Color.yellow, ~modSpec);
