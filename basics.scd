@@ -219,11 +219,6 @@ s.doWhenBooted({
 			Window.closeAll;
 			MIDIClient.disposeClient;
 			MIDIIn.disconnectAll;
-			~midiCC.do { |i|
-				i.free;//free bus allocation IDs
-			};
-			~outFB.free;
-			~outLFO.free;
 		});
 
 		~resid = 0.0;
@@ -314,6 +309,8 @@ s.doWhenBooted({
 
 		~noteButts.value;
 
+		~synth = Bus.audio(s);//Summation bus.
+
 		//N.B.==================================
 		// WARNING: Any parameter to a SynthDef
 		//======================================
@@ -366,7 +363,7 @@ s.doWhenBooted({
 			Out.kr(fbbus, postLFO);//Synthesis complete
 
 			//Render out
-			Out.ar(~outBusBase, (postLFO * (iBus.kr(1, 4).dbamp))!2);//output audio
+			Out.ar(~synth, postLFO * (iBus.kr(1, 4).dbamp) / 3);//Output audio, of 8 chan estimate of Gauss
 		},
 		variants: (
 			null: [r: 0.01, l: 0],
@@ -449,8 +446,13 @@ s.doWhenBooted({
 		~knob.value("RTone", Color.green, ~filterSpec);
 		~knob.value("RFuzz", Color.green, ~boostSpec);
 
+		//Internal Routing
+		~knob.value("Intern", Color.yellow, ~volSpec);
+		~knob.value("IFuzz", Color.green, ~boostSpec);
+
 		~left = Bus.audio(s);
 		~right = Bus.audio(s);
+		~drums = Bus.audio(s);
 
 		SynthDef(\preamp, { arg input, output, base;
 			var in = SoundIn.ar(input);
@@ -465,14 +467,24 @@ s.doWhenBooted({
 			Out.ar(output, post);
 		}).add;
 
+		//Need to put all other things here
+
+		SynthDef(\mixer, {
+			var in1 = (~synth.ar + ~drums.ar) / 2;
+			var cBus = ~midiCC[2];//the controls
+			var gain = cBus.kr(1, 6).dbamp;
+			var fuzz = cBus.kr(1, 7).dbamp;
+			var sig = (in1 * fuzz).clip(-1.0, 1.0);
+			var soft = sig * (3 - sig.squared) / 2;//soft
+			var post = ((2 * soft * gain) + ~left.ar + ~right.ar) / 4;//da mix within unit range
+			Out.ar(~outBusBase ! 2, post);
+		}).add;
+
 		AppClock.play({
 			Synth(\preamp, [ input: 0, output: ~left, base: 0 ]);
 			Synth(\preamp, [ input: 1, output: ~right, base: 3 ]);
+			Synth(\mixer);
 		});
-
-		//Internal Routing
-		~knob.value("SRoute", Color.yellow, ~modSpec);
-		~knob.value("Paths", Color.red, ~modSpec);
 
 		//row 2 - Effect Shaper
 		//https://en.wikipedia.org/wiki/Chebyshev_equation (Evens mul?)
