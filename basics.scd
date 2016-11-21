@@ -438,28 +438,34 @@ s.doWhenBooted({
 
 		//Left In Preamp
 		~knob.value("Left", Color.yellow, ~modSpec);
-		~knob.value("LTone", Color.green, ~modSpec);
+		~knob.value("LTone", Color.green, ~filterSpec);
 		~knob.value("LFuzz", Color.green, ~modSpec);
 
-		~left = Bus.audio(s);
+		//Right In Preamp
+		~knob.value("Right", Color.yellow, ~modSpec);
+		~knob.value("RTone", Color.green, ~filterSpec);
+		~knob.value("RFuzz", Color.green, ~modSpec);
 
-		SynthDef(\lpreamp, {
-			var in = SoundIn.ar(0);
+		~left = Bus.audio(s);
+		~right = Bus.audio(s);
+
+		SynthDef(\preamp, { arg input, output;
+			var in = SoundIn.ar(input);
 			var cBus = ~midiCC[2];//the controls
 			var gain = cBus.kr(1, 0) / 100;
 			var tone = cBus.kr(1, 1);
 			var fuzz = cBus.kr(1, 2) / 4;
-
-			var sig = in * fuzz.clip(-1.0, 1.0);
+			var lpf = LPF.ar(in, (69 + tone).lag.midicps);
+			var sig = (lpf * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
 			var post = soft * gain;
-			Out.ar(~left, post);
+			Out.ar(output, post);
 		}).add;
 
-		//Right In Preamp
-		~knob.value("Right", Color.yellow, ~modSpec);
-		~knob.value("RTone", Color.green, ~modSpec);
-		~knob.value("RFuzz", Color.green, ~modSpec);
+		AppClock.play({
+			Synth(\preamp, [ input: 0, output: ~left ]);
+			Synth(\preamp, [ input: 1, output: ~right ]);
+		});
 
 		//Internal Routing
 		~knob.value("SRoute", Color.yellow, ~modSpec);
