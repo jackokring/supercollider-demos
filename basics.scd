@@ -597,10 +597,10 @@ s.doWhenBooted({
 		~noteButts.value;
 
 		SynthDef(\drum, { arg v, l, r, p;
-			var env = Env.perc(0.01, r, p);
+			var env = Env.perc(0.01, r + 0.1, p);
 			var gen = EnvGen.kr(env, doneAction: 2);
-			var freq = v * 100 / (40 + l * 100 * gen.squared).sqrt;
-			var d = SinOscFB.ar(freq, gen / (16.0 * r + 1.0), gen);
+			var freq = (v * 150) + 10;
+			var d = SinOscFB.ar(freq, 20 * l * gen.cubed, gen);
 			Out.ar(~drums, d);
 		}).add;
 
