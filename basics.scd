@@ -661,20 +661,24 @@ s.doWhenBooted({
 			}, nil);
 		});
 
-		//The following machine does tempo synced control remapping. There is 8 four controls parts.
-		//In, out, ctl, gain ... So chan (note vs bend polar), one of 16, one of 32, gain (polar).
-		//If you have more than 8 keyboards ... :(
-		//=============================
-		// PITCH MOD AND NOTE REMAPPER
-		//=============================
+		//The following machine does tempo synced control remapping
+		//So the control is updated on the note play
+		//Likely best done by a tempo played synthdef
+		//There is 16 controls parts. (one per channel)
+		//ctl, gain ... one of 32, and 1/8 to 8 times
+		//If you have more than 16 keyboards ... :(
+		//===============
+		// NOTE REMAPPER
+		//===============
 
 		~contHolder.value("Sparkie (MIDI ch 14)");//14
 
-		//=====================================
-		// MIDI 15
-		//=====================================
+		//ctl, gain
+		//===================
+		// VELOCITY REMAPPER
+		//===================
 
-		~contHolder.value("");//15
+		~contHolder.value("Fluff (MIDI ch 15)");//15
 
 
 		//============
@@ -739,17 +743,20 @@ s.doWhenBooted({
 			});
 		});
 
-		//============================================================================
-		// REDIRECTS CH16 (NOTE CONTROLLER) AND CH15 (BEND AND AFTERTOUCH CONTROLLER)
-		//============================================================================
+		//==================================
+		// REDIRECTS CH16 (NOTE CONTROLLER)
+		//==================================
 		//Synthetic controllers, on channel 16, lower 16 as note ratio, and higher (+16) as last velocity
-		//Bend and aftertouch (mono) on channel 15 synthetics. Tone lower 16, touch (+16)
+		//After reading through some MIDI keyboard manuals
 
-		~midiCCBend = ControlSpec(1 / 64, 64, \exp);
+		~midiCCBend = ControlSpec(1 / 64, 64, \exp, 0, 1);
+		~midiVelSpec = ControlSpec(0, 127, \lin, 1, 0);
 
-		~tuneReq = { 32.do { arg i;
+		~tuneReq = { 16.do { arg i;
 			~midiCCSpec[15][i] = ~midiCCBend;
 			~midiCC[15].subBus(i).set(1.0);
+			~midiCCSpec[15][i + 15] = ~midiVelSpec;
+			~midiCC[15].subBus(i + 15).set(0);
 		} };
 
 		~tuneReq.value;
@@ -764,9 +771,9 @@ s.doWhenBooted({
 				var bus = ~midiCC[15].subBus(chan);
 				//63 is 1.0 -> +6
 				bus.set(spec.map((note / 127)) * (-6.midiratio));//D#5
-				/* spec = ~midiCCSpec[15][chan + 15];
+				spec = ~midiCCSpec[15][chan + 15];
 				bus = ~midiCC[15].subBus(chan + 16);
-				bus.set(spec.map(vel / 127)); */
+				bus.set(spec.map(vel));
 			});
 		});
 
@@ -777,14 +784,15 @@ s.doWhenBooted({
 
 		//Feed into tune control.
 		//Center 2000 hex
-		MIDIFunc.bend({
+		//N.B. Usually this can be reassigned
+		/* MIDIFunc.bend({
 			arg bend, chan, uid;
 			if(uid == ~midiSrc, {//expression is not function (as while and case would be).
 				var spec = ~midiCCSpec[15][chan + 16];//synthetic
 				var bus = ~midiCC[15].subBus(chan + 16);
 				bus.set(spec.map((bend - 8192) / 8192 / 2 + 0.5));
 			});
-		});
+		}); */
 
 		/* /A monphonic max pressure event.
 		MIDIFunc.touch({

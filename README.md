@@ -46,9 +46,9 @@ Well, I could go on but here's a list with the MIDI channel controllers (0 to 31
   * 11
   * 12
   * *13 - Unlucky Jack* (completed) - A controller test app. To test out your controller numbers. Set your device to 13, select source on *Captain HiHo*.
-  * *14 - Sparkie* (in development) - A controller remapper. For access to any from any controller.
-  * 15
-  * *16 - Notary Nob* (completed) - A virtual MIDI note, and bend event (on all channels) to controls (on 16) mapper. Also the about box.
+  * *14 - Sparkie* (in development) - A note to controller remapper. For access to any controller on the channel.
+  * *15 - Fluff* (in development) - A velocity to controller remapper. For access to any controller on the channel.
+  * *16 - Notary Nob* (completed) - A virtual MIDI note event (on all channels) to controls (on 16). Also the about box.
   
 ## Blerb
 
@@ -75,6 +75,7 @@ may be open too. This does lead to some unexpected locations for features, such 
   * The master volumes are on *Sargent Sift* and in many ways this is the audio path output machine.
   * *Captain HiHo* is run 8 times slower than *General Hi* and has a transposer pattern. It also is the location of the tempo speed multiplier.
   * The global master volume is in the system tray.
+  * The last three machines can be controlled such that the sequence can adapt the role of the keyboard on all channels.
   * Feature are generally added as and when I find the need, or would find utility in them. There is no feature request process.
   * The bug tracker is not used, but feel free to use it. I may not respond, but at some point I may consider so.
   * There are as yet no hooks for development in other files for easy pull requests.
