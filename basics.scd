@@ -440,15 +440,13 @@ s.doWhenBooted({
 		~knob.value("Left", Color.yellow, ~volSpec);
 		~knob.value("LTone", Color.green, ~filterSpec);
 		~knob.value("LFuzz", Color.green, ~boostSpec);
+		~knob.value("LPan", Color.yellow, ~polSpec);
 
 		//Right In Preamp
 		~knob.value("Right", Color.yellow, ~volSpec);
 		~knob.value("RTone", Color.green, ~filterSpec);
 		~knob.value("RFuzz", Color.green, ~boostSpec);
-
-		//Internal Routing
-		~knob.value("Intern", Color.yellow, ~volSpec);
-		~knob.value("IFuzz", Color.green, ~boostSpec);
+		~knob.value("RPan", Color.yellow, ~polSpec);
 
 		~left = Bus.audio(s);
 		~right = Bus.audio(s);
@@ -470,21 +468,30 @@ s.doWhenBooted({
 		//Need to put all other things here
 
 		SynthDef(\mixer, {
-			var in1 = (~synth.ar + ~drums.ar) / 2;
+			var in1 = ~synth.ar;
 			var cBus = ~midiCC[2];//the controls
-			var gain = cBus.kr(1, 6).dbamp;
-			var fuzz = cBus.kr(1, 7).dbamp;
+			var gain = cBus.kr(1, 8).dbamp;
+			var fuzz = cBus.kr(1, 9).dbamp;
 			var sig = (in1 * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
-			var post = ((2 * soft * gain) + ~left.ar + ~right.ar) / 4;//da mix within unit range
+			var in2 = ~drums.ar;
+			var gain2 = cBus.kr(1, 14).dbamp;
+			var fuzz2 = cBus.kr(1, 15).dbamp;
+			var sig2 = (in2 * fuzz2).clip(-1.0, 1.0);
+			var soft2 = sig2 * (3 - sig2.squared) / 2;//soft
+			var post = ((soft * gain) + (soft2 * gain2) + ~left.ar + ~right.ar) / 4;//da mix within unit range
 			Out.ar(~outBusBase, post ! 2);
 		}).add;
 
 		AppClock.play({
 			Synth(\preamp, [ input: 0, output: ~left, base: 0 ]);
-			Synth(\preamp, [ input: 1, output: ~right, base: 3 ]);
+			Synth(\preamp, [ input: 1, output: ~right, base: 4 ]);
 			Synth(\mixer);
 		});
+
+		//Synth Routing
+		~knob.value("Synths", Color.yellow, ~volSpec);
+		~knob.value("SFuzz", Color.green, ~boostSpec);
 
 		//row 2 - Effect Shaper
 		//https://en.wikipedia.org/wiki/Chebyshev_equation (Evens mul?)
@@ -493,37 +500,35 @@ s.doWhenBooted({
 		~knob.value("Basis", Color.cyan, ~modSpec);
 		~knob.value("Order", Color.cyan, ~modSpec);//Curve set blender
 		~knob.value("Odds", Color.cyan, ~modSpec);//Cross mul level
-		~knob.value("Mix", Color.green, ~modSpec);
+		~knob.value("Pan", Color.yellow, ~polSpec);
 
-		//row 2 - Effect Compressor
+		//Drums Routing
+		~knob.value("Drums", Color.yellow, ~volSpec);
+		~knob.value("DFuzz", Color.green, ~boostSpec);
+
+		//row 3 - Effect Compressor
 		~knob.value("Attack", Color.magenta, ~modSpec);
 		~knob.value("Decay", Color.magenta, ~modSpec);
 		~knob.value("Gain", Color.magenta, ~modSpec);
-		~knob.value("Mix", Color.green, ~modSpec);
+		~knob.value("Pan", Color.yellow, ~polSpec);
 
 		//row 3 - Effect Flange
 		~knob.value("DRatio", Color.white, ~modSpec);
 		~knob.value("MRatio", Color.white, ~modSpec);
 		~knob.value("Depth", Color.white, ~modSpec);
-		~knob.value("Mix", Color.green, ~modSpec);
+		~knob.value("Pan", Color.yellow, ~polSpec);
 
-		//row 3 - Effect Delay
+		//row 4 - Effect Delay
 		~knob.value("Ratio", Color.blue, ~modSpec);//Tempo locked
 		~knob.value("Feedfor", Color.blue, ~polSpec);//All-pass
 		~knob.value("Feedback", Color.blue, ~polSpec);//Feedback output vs input (also phase feedback polarity)
-		~knob.value("Mix", Color.green, ~modSpec);
+		~knob.value("Pan", Color.yellow, ~polSpec);
 
 		//row 4 - Effect Subshift
 		~knob.value("Ratio", Color.grey, ~modSpec);//Delay timing
 		~knob.value("Down", Color.grey, ~modSpec);//Tuning
 		~knob.value("Sectors", Color.grey, ~modSpec);//Amount of overlay sectors (>1)
-		~knob.value("Mix", Color.green, ~polSpec);
-
-		//row 4 - Stereo Controls
-		~knob.value("LOut", Color.red, ~modSpec);//Left channel out select
-		~knob.value("ROut", Color.red, ~modSpec);
-		~knob.value("PLeft", Color.green, ~polSpec);//Phase polarity of left
-		~knob.value("PRight", Color.green, ~polSpec);
+		~knob.value("Pan", Color.yellow, ~polSpec);
 
 
 
