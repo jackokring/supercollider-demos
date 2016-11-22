@@ -336,7 +336,7 @@ s.doWhenBooted({
 			var polEnv = (env * mBus.kr(1, 8) / 100 * 12).midiratio.lag;
 
 			var plEnv = (env * mBus.kr(1, 10) / 100) + 1;
-			var ordenv = (env * (mBus.kr(1, 9) / 100) * (iBus.kr(1, 9) / 100));
+			var ordenv = (1 - (env * mBus.kr(1, 9) / 100)) * (iBus.kr(1, 9) / 100);
 
 			var sh2 = (env * mBus.kr(1, 12) / 100) + 1;
 			var sh9 = (env * mBus.kr(1, 13) / 100) + 1;
