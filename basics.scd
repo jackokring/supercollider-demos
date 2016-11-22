@@ -325,29 +325,31 @@ s.doWhenBooted({
 			var note = iBus.kr(1, 6) + 69 + key + (mBus.kr(1, 5) / 100 * 3 * ~outLFO.ar);//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
-			var out = ~outFB.kr(1, fbidx);//Get feedback bus
+			//var out = ~outFB.kr(1, fbidx);//Get feedback bus
 
 			var rl = 1 / iBus.kr(1, 2) * 400;
-			var stip = (out * (iBus.kr(1, 5) / 100).lag * (1 - (mBus.kr(1, 4).lag / 100 * ~outLFO.ar).squared) +
-				(PinkNoise.ar * mBus.kr(1, 9) / 100)) / 3;// <5
-			var pm = iBus.kr(1, 7) / 100 * out * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar).squared);
+			var stip = ((iBus.kr(1, 5) / 100) * (1 - (mBus.kr(1, 4) / 100 * ~outLFO.ar))); //+
+//				//(PinkNoise.ar * mBus.kr(1, 9) / 100));// <5
+			var pm = iBus.kr(1, 7) / 100 * (1 - (mBus.kr(1, 6).lag / 100 * ~outLFO.ar));
 
 			var env = EnvGen.kr(Env.perc(0.1, r * rl, l), doneAction: 2);
 			var polEnv = (env * mBus.kr(1, 8) / 100 * 12).midiratio.lag;
-			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + stip)) * polEnv;//Pop elimination
+
 			var plEnv = (env * mBus.kr(1, 10) / 100) + 1;
+			var ordenv = (env * (mBus.kr(1, 9) / 100) * (iBus.kr(1, 9) / 100));
 
 			var sh2 = (env * mBus.kr(1, 12) / 100) + 1;
 			var sh9 = (env * mBus.kr(1, 13) / 100) + 1;
 			var sh5 = (env * mBus.kr(1, 14) / 100) + 1;
 			var sh17 = (env * mBus.kr(1, 15) / 100) + 1;
 
-			var subz = SinOsc.ar( hz / 2, stip, iBus.kr(1, 12) * sh2 / 50) +
-			SinOsc.ar( hz / 9, stip, iBus.kr(1, 13) * sh9 / 50) + //The nine fix. Both pseudo and real Fermat in one.
-			SinOsc.ar( hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
-			SinOsc.ar( hz / 17, stip, iBus.kr(1, 15) * sh17 / 50);
+			var subz = SinOscFB.ar(hz / 2, stip, iBus.kr(1, 12) * sh2 / 50) +
+			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 50) + //The nine fix. Both pseudo and real Fermat in one.
+			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
+			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 50);
 
-			var osc = SinOsc.ar(hz, pm + subz, env);
+			var osc = SinOsc.ar(hz, SinOscFB.ar(hz, pm, pm) + subz, env);
+			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + (stip * osc))) * polEnv;//Pop elimination
 			var lpf = LPF.ar(osc, filt);
 
 			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 10 * plEnv) + lpf).clip(-1.0, 1.0);//hard
@@ -355,12 +357,12 @@ s.doWhenBooted({
 			var plate = q * (3 - q.squared) / 2;//softer
 			var link = LPF.ar(plate, filt);
 
-			var ac = (link * iBus.kr(1, 9) / 100) + (plate * (1 - (iBus.kr(1, 9) / 100)));
+			var ac = (link * ordenv) + (plate * (1 - ordenv));
 			var thEnv = (env * mBus.kr(1, 11) / 100 * 12).midiratio;
 			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt * thEnv);//DC removal and low cut
-			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 200 * ~outLFO.ar).squared);
+			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar));
 
-			Out.kr(fbbus, postLFO);//Synthesis complete
+//			Out.kr(fbbus, postLFO);//Synthesis complete
 
 			//Render out
 			Out.ar(~synth, postLFO * (iBus.kr(1, 4).dbamp) / 3);//Output audio, of 8 chan estimate of Gauss
@@ -406,7 +408,7 @@ s.doWhenBooted({
 
 		//row 2 - Program (control timbrals of Hi)
 		~knob.value("FiltEnv", Color.yellow, ~polSpec);
-		~knob.value("Pink", Color.green, ~modSpec);
+		~knob.value("OrdEnv", Color.green, ~modSpec);
 		~knob.value("PlatEnv", Color.yellow, ~polSpec);
 		~knob.value("ThinEnv", Color.yellow, ~polSpec);
 		~knob.value("Mod2", Color.green, ~polSpec);
