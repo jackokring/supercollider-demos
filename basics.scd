@@ -359,9 +359,9 @@ s.doWhenBooted({
 			var sh17 = (env * mBus.kr(1, 15) / 100) + 1;
 
 			var subz = SinOscFB.ar(hz / 2, stip, iBus.kr(1, 12) * sh2 / 50) +
-			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 50) + //The nine fix. Both pseudo and real Fermat in one.
+			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 70) + //The nine fix. Both pseudo and real Fermat in one.
 			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
-			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 50);
+			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 70);
 
 			var osc = SinOsc.ar(hz, SinOscFB.ar(hz, pm, pm) + subz, env);
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + (stip * osc))) * polEnv;//Pop elimination
