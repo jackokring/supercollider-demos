@@ -337,7 +337,7 @@ s.doWhenBooted({
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var mBus = ~midiCC[1];//The modulation bus
 
-			var note = iBus.kr(1, 6) + 69 + key + (mBus.kr(1, 5) / 100 * 3 * ~outLFO.ar);//Base midi note
+			var note = iBus.kr(1, 6) + 69 + key + (mBus.kr(1, 5) / 100 * ~outLFO.ar);//Base midi note
 			var hz = note.midicps;//Base with note multiplier
 
 			//var out = ~outFB.kr(1, fbidx);//Get feedback bus
