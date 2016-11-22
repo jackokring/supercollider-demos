@@ -6,13 +6,13 @@ good. The files included are as follows:
 
 ## basics.scd
 
-This is the main toolkit adaptation loader. It sets many defaults, and makes GUI building easier. It is the only file which has
-to be directly loaded. The rest are loaded relative to it. There are some exceptions such as C++ UGens, but they are likely
-to be added as Quarks. The basic Appegiator works off the keys, and MIDI is used to set the base note (when available). The initial
-beat will drop, to maintain sync, as there is a one beat lag. A faster MIDI clocking could be used, but this would waste resources
+This is the main toolkit loader. It sets many defaults, and makes GUI building easier. It is the only file which has
+to be directly loaded. The rest are loaded relative to it. There may be some exceptions such as C++ UGens, but they are likely
+to be added as Quarks. The basic appegiator works off the keys, and MIDI is used to set the base note (when available). The initial
+beat should drop, to maintain sync, as there is a one beat lag. A faster MIDI clocking could be used, but this would waste resources
 which are better spent on making noise.
 
-There is a faster MIDI clock, but it is for controller sync only. As resources are better spent on noise instead of controller
+There is a MIDI clock, but it is for  sync only. As resources are better spent on noise instead of controller
 GUI updating, the trend is for the GUI to updated at a slower rate. Not that you'd notice but the GUI updates the busses, and so
 this is a little more involved than would first appear, and involves controller ID functions, and an occasional value poke back.
 It has the effect of snapping GUI controls back sometimes after being altered in the GUI. The motors are strong in this one!
@@ -33,7 +33,7 @@ expression and control. MIDI is not sent by this suite, it is not a bus master.
 
 Well, I could go on but here's a list with the MIDI channel controllers (0 to 31) should be on.
 
-  * *01 - General Hi* (in testing) - A rythum synth described above.
+  * *01 - General Hi* (completed) - A rythum synth described above.
   * *02 - Captain HiHo* (in testing) - An LFO and envelope modulation controller for *General Hi*. Multibus MIDI selection too.
   * *03 - Sargent Sift* (in development) - A mixer for sound card ins, and the machines within, plus effects.
   * *04 - Corporal Beat* (in development) - A simple drum sound modelling interface.
@@ -62,7 +62,7 @@ and master is bleeding edge alpha at present.
 
 There is some very kludgy work arounds, such as the use of a control bus for feedback, as an audio bus would render one block late for
 feedback. Luckly, you can at present route audio over control buses. I'm not really happy with the solution, and hope some future
-release has a more appropriate method of single sample feedback.
+release has a more appropriate method of single sample feedback. This has been fixed with little sound change.
 
 The methodology of adding new machines to add extensions to other machines is to keep the GUI build consistent, and allows minimizing
 windows not in the current focus. I think this better than having massive windows of controls, when other software in the performance

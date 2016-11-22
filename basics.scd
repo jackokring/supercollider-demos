@@ -205,7 +205,7 @@ s.doWhenBooted({
 	(
 		//FB VIA A BUS
 		//Surprising use of control buss gets sampling FB at audio rate (with 1 sample delay?)
-		~outFB = Bus.control(s, 8);//the output (pre volume)
+		//~outFB = Bus.control(s, 8);//the output (pre volume)
 		//Always pass only necessary busses into Synth, as the SynthDef CAN'T Out index a subBus!!!
 		~outLFO = Bus.audio(s);
 
@@ -236,8 +236,7 @@ s.doWhenBooted({
 						//===============================================
 						Synth(\lfo);
 						Synth(~envArr[iBus[note + 24].floor],
-							[ key: iBus[note + 16] + jBus[~stepIdx + 16],
-								fbbus: ~outFB.subBus(~noteIdx), fbidx: ~noteIdx ]);
+							[ key: iBus[note + 16] + jBus[~stepIdx + 16] ]);
 						//Seems to be a sync scheduling bug, making Synth play on the tick after it get scheduled.
 						//I think this is to do with the tick already having passed at the schedule, and jitter effect
 						//cancellation.
@@ -318,7 +317,7 @@ s.doWhenBooted({
 		// and other things depending on the scalar nature of integers.
 		// Kind of obvious when you think deeper about how the server runs.
 
-		SynthDef(\hi, { arg key = 0, r = 1, l = 1, fbbus, fbidx;//last for variants
+		SynthDef(\hi, { arg key = 0, r = 1, l = 1;//last for variants
 			var iBus = ~midiCC[0];//Get the instrument bus
 			var mBus = ~midiCC[1];//The modulation bus
 
