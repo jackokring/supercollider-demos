@@ -597,11 +597,16 @@ s.doWhenBooted({
 		~noteButts.value;
 
 		SynthDef(\drum, { arg v, l, r, p;
-			var env = Env.perc(0.01, r + 0.1, p);
+			var env = Env.perc(0.05, r * 0.45 + 0.1, p * 1.5);
 			var gen = EnvGen.kr(env, doneAction: 2);
-			var freq = (v * 150) + 10;
-			var d = SinOscFB.ar(freq, 20 * l * gen.cubed, gen);
-			Out.ar(~drums, d);
+			var osc = WhiteNoise.ar(gen);
+			var a = BPF.ar(osc, v * 1000 + 50);
+			var sig = a.clip(-1.0, 1.0);
+			var soft = (1 + (l * 5)) * sig * (3 - sig.squared) / 2;//soft
+			var b = BPF.ar(soft, v * 1000 + 50);
+			var sig2 = b.clip(-1.0, 1.0);
+			var soft2 = sig2 * (3 - sig2.squared) / 2;//soft
+			Out.ar(~drums, soft2 / 3);
 		}).add;
 
 
