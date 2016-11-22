@@ -358,8 +358,8 @@ s.doWhenBooted({
 			var link = LPF.ar(plate, filt);
 
 			var ac = (link * ordenv) + (plate * (1 - ordenv));
-			var thEnv = (env * mBus.kr(1, 11) / 100 * 12).midiratio;
-			var order = HPF.ar(ac, (iBus.kr(1, 11).lag * 0.0095 + 0.05) * filt * thEnv);//DC removal and low cut
+			var thEnv = (env * mBus.kr(1, 11) / 100 * 12).midiratio.lag;
+			var order = HPF.ar(ac, (1 + (iBus.kr(1, 11).lag / 100 * 32)) * filt / 33 * thEnv);//DC removal and low cut
 			var postLFO = order * (1 - (mBus.kr(1, 3).lag / 100 * ~outLFO.ar));
 
 //			Out.kr(fbbus, postLFO);//Synthesis complete
