@@ -424,9 +424,9 @@ s.doWhenBooted({
 		SynthDef(\lfo, {
 			var cBus = ~midiCC[0];
 			var lBus = ~midiCC[1];
-			var oneTick = 1 / (cBus.kr(1, 2) / 60 * lBus.kr(1, 1));
+			var oneTick = (cBus.kr(1, 2) / 60 * lBus.kr(1, 1)) / 8;
 			var hz = oneTick * lBus.kr(1, 2);//Rate adjusted LFO
-			Out.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0.01, oneTick * lBus.kr(1, 7) / 20, 0.5), doneAction: 2)));
+			Out.ar(~outLFO, SinOsc.ar(hz, EnvGen.kr(Env.linen(0, 8 / oneTick * lBus.kr(1, 7) / 100, 0), doneAction: 2)));
 		}).add;//DON'T FORGET TO ADD!!!!!!
 
 		//==================

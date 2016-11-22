@@ -34,7 +34,7 @@ expression and control. MIDI is not sent by this suite, it is not a bus master.
 Well, I could go on but here's a list with the MIDI channel controllers (0 to 31) should be on.
 
   * *01 - General Hi* (completed) - A rythum synth described above.
-  * *02 - Captain HiHo* (in testing) - An LFO and envelope modulation controller for *General Hi*. Multibus MIDI selection too.
+  * *02 - Captain HiHo* (completed) - An LFO and envelope modulation controller for *General Hi*. Multibus MIDI selection too.
   * *03 - Sargent Sift* (in development) - A mixer for sound card ins, and the machines within, plus effects.
   * *04 - Corporal Beat* (in development) - A simple drum sound modelling interface.
   * *05 - Private Stick* (in development) - A four pattern drum sequencer. Select the pattern on *Corporal Beat* per drum sound.
