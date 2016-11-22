@@ -225,6 +225,22 @@ s.doWhenBooted({
 
 		~tick = { arg beats, time, clock;
 			if(~running, {//prevent race on initialization
+				~midiCC[3].get({ arg dBus;
+					~midiCC[4].get({ arg pBus;
+						8.do { arg num;
+							var v = dBus[num] / 100;
+							var l = dBus[num + 8] / 100;// /0?
+							var r = dBus[num + 16] / 100;
+							var p = dBus[num + 24].floor;
+							//got major drum detail
+							p = (p * 8) - 8 + ~noteIdx;//got amplitude index
+							if(p >= 0, { p = pBus[p] / 100; }, { p = 0; });//got amplitude
+							Synth(\drum, [ v: v, l: l, r: r,  p: p ]);
+						};
+					});
+				});
+			});
+			if(~running, {//prevent race on initialization
 				~midiCC[0].get({ arg iBus;
 					~midiCC[1].get({ arg jBus;
 						var fill = ~fillArr[jBus[~stepIdx + 24].floor];//The fill
@@ -579,6 +595,14 @@ s.doWhenBooted({
 		//row 4
 		//Selects pattern row in MIDI 5 Stick
 		~noteButts.value;
+
+		SynthDef(\drum, { arg v, l, r, p;
+			var env = Env.perc(0.01, r, p);
+			var gen = EnvGen.kr(env, doneAction: 2);
+			var freq = v * 100 / (40 + l * 100 * gen.squared).sqrt;
+			var d = SinOscFB.ar(freq, gen / (16.0 * r + 1.0), gen);
+			Out.ar(~drums, d);
+		}).add;
 
 
 		//=================
