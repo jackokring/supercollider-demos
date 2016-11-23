@@ -454,16 +454,16 @@ s.doWhenBooted({
 
 		~boostSpec = ControlSpec(-inf, 24, \db, 0, 12);
 		//Left In Preamp
+		~knob.value("SPan", Color.yellow, ~polSpec);
 		~knob.value("Left", Color.yellow, ~volSpec);
-		~knob.value("LTone", Color.green, ~filterSpec);
 		~knob.value("LFuzz", Color.green, ~boostSpec);
 		~knob.value("LPan", Color.yellow, ~polSpec);
 
 		//Right In Preamp
 		~knob.value("Right", Color.yellow, ~volSpec);
-		~knob.value("RTone", Color.green, ~filterSpec);
 		~knob.value("RFuzz", Color.green, ~boostSpec);
 		~knob.value("RPan", Color.yellow, ~polSpec);
+		~knob.value("DPan", Color.yellow, ~polSpec);
 
 		~left = Bus.audio(s);
 		~right = Bus.audio(s);
@@ -473,10 +473,8 @@ s.doWhenBooted({
 			var in = SoundIn.ar(input);
 			var cBus = ~midiCC[2];//the controls
 			var gain = cBus.kr(1, 0 + base).dbamp;
-			var tone = cBus.kr(1, 1 + base);
-			var fuzz = cBus.kr(1, 2 + base).dbamp;
-			var lpf = LPF.ar(in, (69 + tone).lag.midicps);
-			var sig = (lpf * fuzz).clip(-1.0, 1.0);
+			var fuzz = cBus.kr(1, 1 + base).dbamp;
+			var sig = (in * fuzz).clip(-1.0, 1.0);
 			var soft = sig * (3 - sig.squared) / 2;//soft
 			var post = soft * gain;
 			Out.ar(output, post);
@@ -501,7 +499,7 @@ s.doWhenBooted({
 		}).add;
 
 		AppClock.play({
-			Synth(\preamp, [ input: 0, output: ~left, base: 0 ]);
+			Synth(\preamp, [ input: 0, output: ~left, base: 1 ]);
 			Synth(\preamp, [ input: 1, output: ~right, base: 4 ]);
 			Synth(\mixer);
 		});
