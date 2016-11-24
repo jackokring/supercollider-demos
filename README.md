@@ -22,9 +22,9 @@ feedback AM/PM/Sub-harmonic hybrid, and can make very fat sounds, with ease. The
 Don't worry, this is expected, as the HIHo has all the extras which are useful as it is a modulation synth, producing no
 sound itself. Be careful in the twist as some of those dials have quite an effect.
 
-The generation is basically 2 stage phase modulation (4 operator, 3 into 1), with 2 feedbacks. This is fed into a filter 6dB
-and some frequency doubler Q plate with soft clip, followed by and extra 6dB (dry or wet). The mix is then a feedback source for
-both the base operator as AM and PM. The final control feeds the mix to PM the 3 sub harmonic oscillators an the filter cut.
+The generation is basically 2 stage phase modulation (5 operator, 4 into 1), with extras. This is fed into a filter 6dB
+and some frequency doubler Q plate with soft clip, followed by and extra 6dB (dry or wet). The mix is then a source for
+both the base operator as AM (via filter slope) and PM. The stiple mix is to PM the 4 sub harmonic oscillators and the filter cut.
 It can all lead to chaos on just a sine of the times.
 
 The *Captain HiHo* is an LFO and envelope modulation unit. It also selects the MIDI source device for channel listening. It has

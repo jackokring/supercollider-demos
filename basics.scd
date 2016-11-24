@@ -362,9 +362,10 @@ s.doWhenBooted({
 			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 70) + //The nine fix. Both pseudo and real Fermat in one.
 			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
 			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 70);
+			var mix = SinOscFB.ar(hz * (5.sqrt + 1) / 2, subz, pm / 2);//interesting
 
-			var osc = SinOsc.ar(hz, SinOscFB.ar(hz, pm, pm) + subz, env);
-			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + (stip * osc))) * polEnv;//Pop elimination
+			var osc = SinOsc.ar(hz, mix + subz, env);
+			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + (stip / 2 * osc))) * polEnv;//Pop elimination
 			var lpf = LPF.ar(osc, filt);
 
 			var q = (((osc - lpf) * lpf * osc * iBus.kr(1, 10) / 10 * plEnv) + lpf).clip(-1.0, 1.0);//hard
