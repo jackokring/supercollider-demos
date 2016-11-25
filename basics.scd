@@ -362,10 +362,10 @@ s.doWhenBooted({
 			var sh5 = (env * mBus.kr(1, 14) / 100) + 1;
 			var sh17 = (env * mBus.kr(1, 15) / 100) + 1;
 
-			var subz = SinOscFB.ar(hz / 2, stip, iBus.kr(1, 12) * sh2 / 50) +
-			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 70) + //The nine fix. Both pseudo and real Fermat in one.
-			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 50) +
-			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 70);
+			var subz = SinOscFB.ar(hz / 2, stip, iBus.kr(1, 12) * sh2 / 25) +
+			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 100) + //The nine fix. Both pseudo and real Fermat in one.
+			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 25) +
+			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 100);
 			var mix = SinOscFB.ar(hz * ~phi17, subz, pm);//interesting
 
 			var osc = SinOsc.ar(hz, mix + subz, env);
