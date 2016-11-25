@@ -327,8 +327,6 @@ s.doWhenBooted({
 		~synth = Bus.audio(s);//Summation bus.
 
 		~phi5 = (5.sqrt + 1) / 2;
-		~phiA = (34 - 2 * (17).sqrt).sqrt - (2 * (34 + (2 * (17).sqrt)).sqrt);
-		~phi17 = (-1 + 17.sqrt + (34 - 2 * (17.sqrt)).sqrt + (2 * (17 + (3 * (17).sqrt) - ~phiA).sqrt)) / 16;
 
 		//N.B.==================================
 		// WARNING: Any parameter to a SynthDef
@@ -366,7 +364,7 @@ s.doWhenBooted({
 			SinOscFB.ar(hz / 9, stip, iBus.kr(1, 13) * sh9 / 100) + //The nine fix. Both pseudo and real Fermat in one.
 			SinOscFB.ar(hz / 5, stip, iBus.kr(1, 14) * sh5 / 25) +
 			SinOscFB.ar(hz / 17, stip, iBus.kr(1, 15) * sh17 / 100);
-			var mix = SinOscFB.ar(hz * ~phi17, subz, pm);//interesting
+			var mix = SinOscFB.ar(hz * ~phi5, subz, pm);//interesting
 
 			var osc = SinOsc.ar(hz, mix + subz, env);
 			var filt = ((hz * (iBus.kr(1, 8).midiratio)).lag * (1 + (stip / 2 * osc))) * polEnv;//Pop elimination
