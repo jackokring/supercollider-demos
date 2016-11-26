@@ -659,7 +659,7 @@ s.doWhenBooted({
 		~knob.value("@7", Color.blue, ~modSpec);
 
 		//=====================================
-		// MIDI 6 - 12
+		// MIDI 6 - 11
 		//=====================================
 
 		~contHolder.value("");//6
@@ -669,7 +669,17 @@ s.doWhenBooted({
 		~contHolder.value("");//9 - Emergency ...
 		~contHolder.value("");//10 - Drums 2 ...
 		~contHolder.value("");//11 - The imagination machine ...
-		~contHolder.value("");//12 - Loose ends
+
+		//=================
+		// PATTERN GUI Pat
+		//=================
+
+		~cont.value("Postman Pat (MIDI ch 12)");//12 - Loose ends
+		12.do {
+			~knob.value("@", Color.red, ~modSpec);
+			~butt.value("=", [ Color.gray, Color.red, Color.green ]);
+		};
+		~noteButts.value;
 
 		//The following machine just IDs your controllers and is a good channel for sending MIDI to null.
 		//You could perhaps use 14, 15 and 16, but that could interfere with controllers.
@@ -724,7 +734,7 @@ s.doWhenBooted({
 		~hello = StaticText(~win, 434@374);
 		~hello.font = ~fontOff;
 		~hello.align = \center;
-		~hello.string = "<h1>Hello, and welcome to the basics synthesizers.</h1><br><br>Channel 16 helps use notes as controllers. To close use the <b>General Hi</b> close button, as the other close buttons do not work. General Hi controls the main tempo.<br><br>This software is by <a href=\"http:/kring.co.uk\">K Ring Technologies Ltd.</a> and the hope is you enjoy.<br><br>The coding was done by Simon Jackson over a few months. There are no classes defined in the code so as to make it a simple single portable file.<br><br>There is no particular versioning system apart from an up to date master branch.";
+		~hello.string = "<h1>Hello, and welcome to the basics synthesizers.</h1><br><br>Channel 16 helps use notes as controllers. To close use the <b>General Hi</b> close button, as the other close buttons do not work. General Hi controls the main tempo.<br><br>This software is by <a href=\"http:/kring.co.uk\">K Ring Technologies Ltd.</a> and the hope is you enjoy.<br><br>The coding was done by Simon Jackson over a few months. There are no classes defined in the code so as to make it a simple single portable file.";
 
 
 		//==============
