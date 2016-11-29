@@ -38,7 +38,7 @@ Well, I could go on but here's a list with the MIDI channel controllers (0 to 31
   * *03 - Sargent Sift* (completed) - A mixer for sound card ins, and the machines within, plus effects.
   * *04 - Corporal Beat* (completed) - A simple drum sound modelling interface.
   * *05 - Private Stick* (completed) - A four pattern drum sequencer. Select the pattern on *Corporal Beat* per drum sound.
-  * 06
+  * *06 - Private Groove* (completed) - An easy pattern extender working with *Private Stick* for some chaos.
   * 07
   * 08
   * 09

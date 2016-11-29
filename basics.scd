@@ -227,16 +227,20 @@ s.doWhenBooted({
 			if(~running, {//prevent race on initialization
 				~midiCC[3].get({ arg dBus;
 					~midiCC[4].get({ arg pBus;
-						8.do { arg num;
-							var v = dBus[num] / 100;
-							var l = dBus[num + 8] / 100;// /0?
-							var r = dBus[num + 16] / 100;
-							var p = dBus[num + 24].floor;
-							//got major drum detail
-							p = (p * 8) - 8 + ~noteIdx;//got amplitude index
-							if(p >= 0, { p = pBus[p] / 100; }, { p = 0; });//got amplitude
-							Synth(\drum, [ v: v, l: l, r: r,  p: p ]);
-						};
+						~midiCC[5].get({ arg gBus;
+							8.do { arg num;
+								var v = dBus[num] / 100;
+								var l = dBus[num + 8] / 100;// /0?
+								var r = dBus[num + 16] / 100;
+								var p = dBus[num + 24].floor;
+								var pat = (p * 8) - 8 + ~stepIdx;//got pattern control index
+								var id = (((~stepIdx * 8 + ~noteIdx) * gBus[pat]) % 8).floor;
+								//got major drum detail
+								p = (p * 8) - 8 + id;//got amplitude index
+								if(p >= 0, { p = pBus[p] / 100; }, { p = 0; });//got amplitude
+								Synth(\drum, [ v: v, l: l, r: r,  p: p ]);
+							};
+						});
 					});
 				});
 			});
@@ -554,6 +558,11 @@ s.doWhenBooted({
 		// DRUMS GUI Beat
 		//================
 
+		~drumKnobs = { arg pre, col, spec;
+			8.do { arg i;
+				~knob.value(pre ++ (i.asDigit), col, spec);
+		}};
+
 		//row 1 - Basic Controls
 		~cont.value("Corporal Beat (MIDI ch 4)");
 
@@ -564,34 +573,13 @@ s.doWhenBooted({
 		//By altering the 2 constants L^2 and V ...
 		//Then there is the release envekope time R ...
 		//And a pattern selector
-		~knob.value("V1", Color.yellow, ~modSpec);
-		~knob.value("V2", Color.yellow, ~modSpec);
-		~knob.value("V3", Color.yellow, ~modSpec);
-		~knob.value("V4", Color.yellow, ~modSpec);
-		~knob.value("V5", Color.yellow, ~modSpec);
-		~knob.value("V6", Color.yellow, ~modSpec);
-		~knob.value("V7", Color.yellow, ~modSpec);
-		~knob.value("V8", Color.yellow, ~modSpec);
+		~drumKnobs.value("V", Color.yellow, ~modSpec);
 
 		//row 2
-		~knob.value("L1", Color.yellow, ~modSpec);
-		~knob.value("L2", Color.yellow, ~modSpec);
-		~knob.value("L3", Color.yellow, ~modSpec);
-		~knob.value("L4", Color.yellow, ~modSpec);
-		~knob.value("L5", Color.yellow, ~modSpec);
-		~knob.value("L6", Color.yellow, ~modSpec);
-		~knob.value("L7", Color.yellow, ~modSpec);
-		~knob.value("L8", Color.yellow, ~modSpec);
+		~drumKnobs.value("L", Color.yellow, ~modSpec);
 
 		//row 3
-		~knob.value("R1", Color.green, ~modSpec);
-		~knob.value("R2", Color.green, ~modSpec);
-		~knob.value("R3", Color.green, ~modSpec);
-		~knob.value("R4", Color.green, ~modSpec);
-		~knob.value("R5", Color.green, ~modSpec);
-		~knob.value("R6", Color.green, ~modSpec);
-		~knob.value("R7", Color.green, ~modSpec);
-		~knob.value("R8", Color.green, ~modSpec);
+		~drumKnobs.value("R", Color.green, ~modSpec);
 
 		//row 4
 		//Selects pattern row in MIDI 5 Stick
@@ -619,50 +607,41 @@ s.doWhenBooted({
 		~cont.value("Private Stick (MIDI ch 5)");
 
 		//Pattern 1
-		~knob.value("@0", Color.red, ~modSpec);
-		~knob.value("@1", Color.red, ~modSpec);
-		~knob.value("@2", Color.red, ~modSpec);
-		~knob.value("@3", Color.red, ~modSpec);
-		~knob.value("R4", Color.red, ~modSpec);
-		~knob.value("@5", Color.red, ~modSpec);
-		~knob.value("@6", Color.red, ~modSpec);
-		~knob.value("@7", Color.red, ~modSpec);
+		~drumKnobs.value("@", Color.red, ~modSpec);
 
 		//Pattern 2
-		~knob.value("@0", Color.yellow, ~modSpec);
-		~knob.value("@1", Color.yellow, ~modSpec);
-		~knob.value("@2", Color.yellow, ~modSpec);
-		~knob.value("@3", Color.yellow, ~modSpec);
-		~knob.value("@4", Color.yellow, ~modSpec);
-		~knob.value("@5", Color.yellow, ~modSpec);
-		~knob.value("@6", Color.yellow, ~modSpec);
-		~knob.value("@7", Color.yellow, ~modSpec);
+		~drumKnobs.value("@", Color.yellow, ~modSpec);
 
 		//Pattern 3
-		~knob.value("@0", Color.green, ~modSpec);
-		~knob.value("@1", Color.green, ~modSpec);
-		~knob.value("@2", Color.green, ~modSpec);
-		~knob.value("@3", Color.green, ~modSpec);
-		~knob.value("@4", Color.green, ~modSpec);
-		~knob.value("@5", Color.green, ~modSpec);
-		~knob.value("@6", Color.green, ~modSpec);
-		~knob.value("@7", Color.green, ~modSpec);
+		~drumKnobs.value("@", Color.green, ~modSpec);
 
 		//Pattern 4
-		~knob.value("@0", Color.blue, ~modSpec);
-		~knob.value("@1", Color.blue, ~modSpec);
-		~knob.value("@2", Color.blue, ~modSpec);
-		~knob.value("@3", Color.blue, ~modSpec);
-		~knob.value("@4", Color.blue, ~modSpec);
-		~knob.value("@5", Color.blue, ~modSpec);
-		~knob.value("@6", Color.blue, ~modSpec);
-		~knob.value("@7", Color.blue, ~modSpec);
+		~drumKnobs.value("@", Color.blue, ~modSpec);
+
+		//==================
+		// DRUMS GUI Groove
+		//==================
+
+		//Basically 8 step pattern control
+		~cont.value("Private Groove (MIDI ch 6)");
+		~drumSpec = ControlSpec(1, 8, \lin, 0.25, 1);
+
+		//Pattern 1
+		~drumKnobs.value("@", Color.red, ~drumSpec);
+
+		//Pattern 2
+		~drumKnobs.value("@", Color.yellow, ~drumSpec);
+
+		//Pattern 3
+		~drumKnobs.value("@", Color.green, ~drumSpec);
+
+		//Pattern 4
+		~drumKnobs.value("@", Color.blue, ~drumSpec);
 
 		//=====================================
-		// MIDI 6 - 11
+		// MIDI 7 - 11
 		//=====================================
 
-		~contHolder.value("");//6
 		~contHolder.value("");//7
 		~contHolder.value("");//8
 
