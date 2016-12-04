@@ -59,6 +59,11 @@ s.boot;
 //=========
 ~midiCCSpec = Array.fill(16, { Array.fill(32, { ControlSpec() }) });//32 controllers and 16 channels
 
+//=========
+// PRESETS
+//=========
+~presets = Array.fill(129, { Array.fill(16, { Array.fill(32, 0) }) });//128 presets each plus default
+
 //=============================
 //MASTER CLOCK AND WIN COUNTER
 //=============================
