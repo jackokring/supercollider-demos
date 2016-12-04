@@ -211,6 +211,9 @@ s.doWhenBooted({
 
 		// Make default window
 		~cont.value("General Hi (MIDI ch 1)",  {
+			~lChan.free;
+			~rChan.free;
+			~mixChan.free;
 			~save.value;
 			~sync.clear;
 			~running = false;
@@ -506,9 +509,9 @@ s.doWhenBooted({
 		}).add;
 
 		AppClock.play({
-			Synth(\preamp, [ input: 0, output: ~left, base: 1 ]);
-			Synth(\preamp, [ input: 1, output: ~right, base: 4 ]);
-			Synth(\mixer);
+			~lChan = Synth(\preamp, [ input: 0, output: ~left, base: 1 ]);
+			~rChan = Synth(\preamp, [ input: 1, output: ~right, base: 4 ]);
+			~mixChan = Synth(\mixer);
 		});
 
 		//Synth Routing
